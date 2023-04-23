@@ -4,6 +4,7 @@ from random import choice
 from string import ascii_uppercase
 
 from .managers import UserManager
+from monitor.models import Monitor
 
 
 class Team(models.Model):
@@ -36,7 +37,8 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # team
-    teams = models.ManyToManyField(Team, through="TeamAssignment")
+    teams = models.ManyToManyField(Team, through="TeamAssignment", related_name='users')
+    monitors = models.ManyToManyField(Monitor, through="MonitorAssignment", related_name='users') 
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -60,3 +62,16 @@ class TeamAssignment(models.Model):
 
     def __str__(self):
         return f"team:{str(self.team.id)} user:{str(self.user.id)}"
+    
+class MonitorAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
+    # permissions
+    # has administrative rights 
+    # internal users or team members can have administrative rights
+    is_admin = models.BooleanField(default=True)
+    # join date
+    begin_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user}~{self.monitor}"
