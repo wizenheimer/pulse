@@ -48,6 +48,17 @@ class User(AbstractUser):
     def __str__(self):
         return str(self.email)
 
+class Subscriber(models.Model):
+    ''' 
+    Subscribers are external users or guest members 
+    '''
+    email = models.EmailField()
+    monitors = models.ManyToManyField(Monitor, through='SubscriberAssignment', related_name='subscribers')
+
+    # to do: handle duplicates between subscribers and users
+
+    def __str__(self):
+        return str(self.email)
 
 class TeamAssignment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -75,3 +86,15 @@ class MonitorAssignment(models.Model):
 
     def __str__(self):
         return f"{self.user}~{self.monitor}"
+
+class SubscriberAssignment(models.Model):
+    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE)
+    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
+    # boolean flags to indicate type of update
+    fetch_uptime = models.BooleanField(default=False)
+    fetch_port = models.BooleanField(default=False)
+    fetch_ssl = models.BooleanField(default=False)
+    fetch_speed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.subscriber}~{self.monitor}"
