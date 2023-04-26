@@ -5,13 +5,15 @@ from .models import Monitor, MonitorResult
 
 
 class MonitorSerializer(serializers.ModelSerializer):
+    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Monitor
         fields = "__all__"
 
 
 class MonitorResultSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = MonitorResult

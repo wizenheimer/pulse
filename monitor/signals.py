@@ -6,6 +6,7 @@ from .models import MonitorResult, Monitor
 
 @receiver(post_save, sender=Monitor)
 def trigger_monitors(sender, created, instance, **kwargs):
+    print("triggered save!")
     if created:
         if instance.test_uptime:
             "Perform uptime tests"

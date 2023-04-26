@@ -14,7 +14,7 @@ class Monitor(models.Model):
     # moved the validation to serializer
     port = models.PositiveIntegerField(null=True, blank=True)
     timeout = models.PositiveIntegerField(default=5)
-    last_checked = models.DateTimeField()
+    last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     # boolean flags to indicate type of monitoring
     test_uptime = models.BooleanField(default=False)
