@@ -11,6 +11,8 @@ class MonitorSerializer(serializers.ModelSerializer):
 
 
 class MonitorResultSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = MonitorResult
         fields = "__all__"
