@@ -1,6 +1,18 @@
 from django.db import models
-from users.models import User, Guest
+from users.models import User, Guest, Team
 from .managers import MonitorManager
+
+
+class Tags(models.Model):
+    """
+    Tags for organizing Monitors
+    """
+
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.title
 
 
 class Monitor(models.Model):
@@ -37,32 +49,37 @@ class Monitor(models.Model):
         ("21600", "6 Hour"),
     )
 
-    # name for the model
+    # monitor descriptors
     name = models.CharField(max_length=256, null=True, blank=True)
-    # moved the validation to serializer
+    description = models.TextField(null=True, blank=True)
+    tags = models.ManyToManyField(Tags, related_name="monitors")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+
+    # monitor specifiers
     protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
     ip = models.GenericIPAddressField(default="127.0.0.1")
-    # for port monitoring
     port = models.PositiveIntegerField(null=True, blank=True)
     timeout = models.PositiveIntegerField(default=5)
-    # metadata region
     region_US1 = models.BooleanField(default=True)
     region_US2 = models.BooleanField(default=False)
     region_EU1 = models.BooleanField(default=False)
     region_Asia1 = models.BooleanField(default=False)
+    # regex for mapping OK status
+    regex = models.CharField(max_length=25, default="200")
+    frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
+
     # meta data
     last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
-    # regex for mapping OK status
-    regex = models.CharField(max_length=25, default="200")
-    # handle subscibers
+
+    # active subscibers
     subscribers = models.ManyToManyField(
         User, through="SubscriberAssignment", related_name="monitors"
     )
     guests = models.ManyToManyField(
         Guest, through="GuestAssignment", related_name="monitors"
     )
+
     # custom model manager
     objects = MonitorManager()
 
