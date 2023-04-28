@@ -5,6 +5,7 @@ from random import choice
 from string import ascii_uppercase
 
 from .managers import UserManager
+
 # from monitor.models import Monitor
 
 
@@ -77,11 +78,11 @@ class Guest(models.Model):
 class TeamAssignment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    # permissions
-    # can create invites
-    can_add_teammate = models.BooleanField(default=True)
-    # can remove users (aka admin)
-    can_remove_teammate = models.BooleanField(default=True)
+    # roles
+    is_manager = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    is_member = models.BooleanField(default=True)
+    is_billing = models.BooleanField(default=False)
     # join date
     begin_date = models.DateTimeField(auto_now_add=True)
 
