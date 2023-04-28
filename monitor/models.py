@@ -3,24 +3,47 @@ from .managers import MonitorManager
 
 
 class Monitor(models.Model):
-    """Monitor class for monitoring
-    1. Uptime
-    2. SSL Certificate
-    3. Port Monitoring
-    4. Speed Monitoring
+    """
+    Class for URL Monitor
+
+    Protocol Primer
+            - ICMP:
+                Response time
+            - HTTP:
+                DNS lookup time, connection time, time to first byte, and total response time
+            - HTTPS:
+                DNS lookup time, connection time, SSL handshake time, time to first byte, and total response time
     """
 
-    url = models.URLField()
+    PROTOCOL_CHOICES = (
+        ("HTTP", "HTTP"),
+        ("HTTPS", "HTTPS"),
+        ("ICMP", "ICMP"),
+    )
+
+    FREQUENCY_CHOICES = (
+        ("30", "30 Seconds"),
+        ("60", "1 Minute"),
+        ("300", "5 Minutes"),
+        ("1800", "30 Minutes"),
+        ("3600", "1 Hour"),
+        ("21600", "6 Hour"),
+    )
+
+    # name for the model
+    name = models.CharField(max_length=256, null=True, blank=True)
     # moved the validation to serializer
+    protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
+    ip = models.GenericIPAddressField(default="127.0.0.1")
+    # for port monitoring
     port = models.PositiveIntegerField(null=True, blank=True)
     timeout = models.PositiveIntegerField(default=5)
+    # meta data
     last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
-    # boolean flags to indicate type of monitoring
-    test_uptime = models.BooleanField(default=False)
-    test_port = models.BooleanField(default=False)
-    test_ssl = models.BooleanField(default=False)
-    test_speed = models.BooleanField(default=False)
+    frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
+    # regex for mapping OK status
+    regex = models.CharField(max_length=25, default="200")
     # custom model manager
     objects = MonitorManager()
 
