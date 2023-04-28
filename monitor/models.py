@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import User, Guest
 from .managers import MonitorManager
 
 
@@ -55,6 +56,13 @@ class Monitor(models.Model):
     frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
     # regex for mapping OK status
     regex = models.CharField(max_length=25, default="200")
+    # handle subscibers
+    subscribers = models.ManyToManyField(
+        User, through="SubscriberAssignment", related_name="monitors"
+    )
+    guests = models.ManyToManyField(
+        Guest, through="GuestAssignment", related_name="monitors"
+    )
     # custom model manager
     objects = MonitorManager()
 
@@ -88,3 +96,21 @@ class MonitorResult(models.Model):
 
     def __str__(self):
         return self.status
+
+
+class SubscriberAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.monitor}"
+
+
+class GuestAssignment(models.Model):
+    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
+    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.monitor}"

@@ -5,7 +5,7 @@ from random import choice
 from string import ascii_uppercase
 
 from .managers import UserManager
-from monitor.models import Monitor
+# from monitor.models import Monitor
 
 
 class Team(models.Model):
@@ -39,9 +39,6 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
     # team
     teams = models.ManyToManyField(Team, through="TeamAssignment", related_name="users")
-    monitors = models.ManyToManyField(
-        Monitor, through="MonitorAssignment", related_name="users"
-    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -65,20 +62,16 @@ class User(AbstractUser):
         return str(RefreshToken.for_user(self))
 
 
-class Subscriber(models.Model):
+class Guest(models.Model):
     """
-    Subscribers are external users or guest members
+    Guest members: Status Pages and Ticket Utils
     """
 
     email = models.EmailField()
-    monitors = models.ManyToManyField(
-        Monitor, through="SubscriberAssignment", related_name="subscribers"
-    )
-
-    # to do: handle duplicates between subscribers and users
+    is_verified = models.BooleanField(default=False)
 
     def __str__(self):
-        return str(self.email)
+        return f"guest: {self.email}"
 
 
 class TeamAssignment(models.Model):
@@ -94,30 +87,3 @@ class TeamAssignment(models.Model):
 
     def __str__(self):
         return f"team:{str(self.team.id)} user:{str(self.user.id)}"
-
-
-class MonitorAssignment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
-    # permissions
-    # has administrative rights
-    # internal users or team members can have administrative rights
-    is_admin = models.BooleanField(default=True)
-    # join date
-    begin_date = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user}~{self.monitor}"
-
-
-class SubscriberAssignment(models.Model):
-    subscriber = models.ForeignKey(Subscriber, on_delete=models.CASCADE)
-    monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
-    # boolean flags to indicate type of update
-    fetch_uptime = models.BooleanField(default=False)
-    fetch_port = models.BooleanField(default=False)
-    fetch_ssl = models.BooleanField(default=False)
-    fetch_speed = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.subscriber}~{self.monitor}"

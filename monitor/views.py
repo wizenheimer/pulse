@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from .models import Monitor, MonitorResult
-from users.models import MonitorAssignment
+
+# from users.models import MonitorAssignment
 from .serializers import MonitorSerializer, MonitorResultSerializer
 from .permissions import isParent
 
@@ -27,9 +28,9 @@ class MonitorViewset(viewsets.ModelViewSet):
         serializer = MonitorResultSerializer(monitor_result, many=True)
         return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        # user = serializer.validated_data["user"]
-        user = self.request.user
-        monitor = serializer.save()
-        assignment = MonitorAssignment(user=user, monitor=monitor)
-        assignment.save()
+    # def perform_create(self, serializer):
+    #     # user = serializer.validated_data["user"]
+    #     user = self.request.user
+    #     monitor = serializer.save()
+    #     assignment = MonitorAssignment(user=user, monitor=monitor)
+    #     assignment.save()
