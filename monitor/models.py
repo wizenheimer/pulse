@@ -59,25 +59,32 @@ class Monitor(models.Model):
     objects = MonitorManager()
 
     def __str__(self):
-        return self.url
+        return self.name
 
 
 class MonitorResult(models.Model):
-    RESULT_CHOICES = (
-        ("Uptime Monitor Result", "Uptime Monitor Result"),
-        ("Port Monitor Result", "Port Monitor Result"),
-        ("SSL Monitor Result", "SSL Monitor Result"),
-        ("Speed Monitor Result", "Speed Monitor Result"),
+    """Monitor Results Class"""
+
+    STATUS_CHOICES = (
+        ("OK", "Status OK"),
+        ("Down", "Status DOWN"),
+        ("Unknown", "Unreachable"),
     )
+
     monitor = models.ForeignKey(
         Monitor, related_name="results", on_delete=models.CASCADE
     )
+    # DNS lookup time
+    dns_lookup_time = models.FloatField(null=True, default=True)
+    # Connection time
+    connection_time = models.FloatField(null=True, default=True)
+    # SSL handshake time
+    ssl_handshake_time = models.FloatField(null=True, default=True)
+    # Total response time
     response_time = models.FloatField(null=True, blank=True)
-    status_code = models.PositiveIntegerField(null=True, blank=True)
-    # store error detail and response text
-    log = models.TextField(null=True, blank=True)
+    # Status
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default="Unknown")
     checked_at = models.DateTimeField(null=True, blank=True)
-    type = models.CharField(max_length=255, choices=RESULT_CHOICES)
 
     def __str__(self):
-        return str(self.status_code)
+        return self.status
