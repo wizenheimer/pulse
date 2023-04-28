@@ -13,6 +13,12 @@ class Monitor(models.Model):
                 DNS lookup time, connection time, time to first byte, and total response time
             - HTTPS:
                 DNS lookup time, connection time, SSL handshake time, time to first byte, and total response time
+    REGION_CHOICES
+        - "USA1", "Oregan, USA"
+        - "EU", "Frankfurt, Germany"
+        - "USA2", "Ohio, USA"
+        - "SEA", "Singapore"
+
     """
 
     PROTOCOL_CHOICES = (
@@ -38,6 +44,11 @@ class Monitor(models.Model):
     # for port monitoring
     port = models.PositiveIntegerField(null=True, blank=True)
     timeout = models.PositiveIntegerField(default=5)
+    # metadata region
+    region_US1 = models.BooleanField(default=True)
+    region_US2 = models.BooleanField(default=False)
+    region_EU1 = models.BooleanField(default=False)
+    region_Asia1 = models.BooleanField(default=False)
     # meta data
     last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
