@@ -1,128 +1,309 @@
+import time
+import socket
 import requests
 import ssl
-import socket
-import datetime
+import re
+
+# TODO: hostname in serializer and auth credentials as nested serializers
 
 
-def test_uptime(url, timeout=None):
+def get_dns_lookup_time(ip):
     """
-    Returns the status code and message
+    Returns the dns lookup time in seconds
     """
-    result = {}
-    if timeout is None or timeout < 0:
-        timeout = 5
-
     try:
-        response = requests.get(url, timeout=timeout)
-        result["status_code"] = response.status_code
-        result["log"] = response.reason
-    except requests.Timeout:
-        result["status_code"] = 408
-        result["log"] = "The server timed out waiting for the request from the client."
-    except requests.ConnectionError:
-        result["status_code"] = 503
-        result[
-            "log"
-        ] = "The server is currently unable to handle the request due to a temporary overload or maintenance"
-    finally:
-        return result
+        start_time = time.time()
+        socket.gethostbyaddr(ip)
+        end_time = time.time()
+        dns_lookup_time = end_time - start_time
+        return dns_lookup_time
+
+    except socket.gaierror as e:
+        # handle DNS resolution errors
+        print(ip, e)
+        return None
+
+    except:
+        # handle other errors
+        return None
 
 
-def test_ssl(domain):
+def get_connection_time(
+    hostname=None,
+    ip=None,
+    protocol="HTTPS",
+    timeout=5,
+    port=None,
+    auth=None,
+    headers=None,
+):
     """
-    ("1.1.1.1") -> [..., "..."]
+    Returns the connection time in seconds
     """
-    result = {}
     try:
-        # Connect to the website using SSL
-        context = ssl.create_default_context()
-        with socket.create_connection((domain, 443)) as sock:
-            with context.wrap_socket(sock, server_hostname=domain) as ssock:
-                # Retrieve SSL certificate information
-                cert = ssock.getpeercert()
+        # need either url or ip
+        if hostname and ip:
+            return None
 
-                # Extract expiry date from certificate
-                expiry_date = datetime.datetime.strptime(
-                    cert["notAfter"], "%b %d %H:%M:%S %Y %Z"
-                )
-                current_date = datetime.datetime.now()
+        # set-up default port if empty
+        if protocol == "HTTPS":
+            default_port = 443
+        elif protocol == "HTTP":
+            default_port = 80
+        elif protocol == "ICMP":
+            return None  # ICMP doesn't require a connection, so return 0
+        else:
+            raise ValueError("Invalid protocol")
 
-                # Compare expiry date with current date
-                if expiry_date < current_date:
-                    result["status_code"] = 403
-                    result["log"] = f"The SSL certificate for {domain} has expired."
-                else:
-                    result["status_code"] = 200
-                    result[
-                        "log"
-                    ] = f"The SSL certificate for {domain} is still valid until {expiry_date}."
-    except ssl.SSLError as e:
-        result["status_code"] = -1
-        result["log"] = f"Error: Failed to establish SSL connection to {domain}"
-    except socket.error as e:
-        result["status_code"] = 404
-        result["log"] = f"Error: Failed to connect to {domain}"
-    except Exception as e:
-        result["status_code"] = 401
-        result["log"] = f"Invalid SSL certificate. Error: {e}"
-    finally:
-        return result
+        if not port:
+            port = default_port
 
+        # prepare url
+        url = f"{protocol.lower()}://"
+        if hostname is None:
+            url += f"{ip}:{port}"
+        else:
+            url += f"{hostname}"
 
-def test_port(url, port):
-    """
-    ("1.1.1.1", 2000) -> [400, "Port 2000 is closed on 1.1.1.1"]
-    """
-    if port is None:
-        port = 0000
-    result = {}
-    try:
-        # Attempt to connect to the specified port
-        host = str(socket.gethostbyname(url))
-        with socket.create_connection((host, port), timeout=3) as sock:
-            result["status_code"] = 200
-            result["log"] = f"Port {port} is open on {host}"
-    except (ConnectionRefusedError, socket.timeout):
-        result["status_code"] = 400
-        result["log"] = f"Port {port} is closed on {host}"
-    except Exception as e:
-        result["status_code"] = 500
-        result["log"] = f"Port {port} can't be reached."
-    finally:
-        return result
+        # add custom headers
+        if headers is None:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
+        # add authentication headers
+        if auth is not None:
+            headers["Authorization"] = "Bearer " + auth
 
-def test_website_speed(url, timeout=None):
-    """Test website speed"""
-    result = {}
-    if timeout is None or timeout < 0:
-        timeout = 5
-    try:
-        # Send a GET request and measure response time
-        response = requests.get(url, timeout=timeout)
-        response_time = response.elapsed.total_seconds()
+        # send requests
+        start_time = time.time()
+        requests.get(url=url, timeout=timeout, headers=headers)
+        end_time = time.time()
 
-        # Print the response time in milliseconds
-        result["status_code"] = 200
-        result["log"] = f"Response time for {url}: {response_time:.2f} seconds"
-        result["response_time"] = response_time
+        # calculate connection time
+        connection_time = end_time - start_time
 
-    except requests.Timeout:
-        result["status_code"] = 408
-        result["log"] = "The server timed out waiting for the request from the client."
-        result["response_time"] = -1
-
-    except requests.ConnectionError:
-        result["status_code"] = 503
-        result[
-            "log"
-        ] = "The server is currently unable to handle the request due to a temporary overload or maintenance."
-        result["response_time"] = -1
+        return connection_time
 
     except requests.exceptions.RequestException as e:
-        result["status_code"] = 400
-        result["log"] = f"Response time for {url}: inf seconds"
-        result["response_time"] = -1
+        print(e)
+        # handle connection errors
+        return None
+
+    except:
+        # handle other errors
+        return None
+
+
+def get_ssl_handshake_time(
+    hostname=None, ip=None, protocol="HTTPS", port=None, auth=None
+):
+    """
+    Returns the ssl handshake time in seconds
+    """
+    try:
+        # need either url or ip
+        if hostname and ip:
+            return None
+
+        if protocol == "HTTPS":
+            default_port = 443
+        elif protocol == "HTTP":
+            # default_port = 80 # SSL doesn't require SSL, so return None
+            return None
+        elif protocol == "ICMP":
+            # ICMP doesn't require SSL, so return None
+            return None
+        else:
+            raise ValueError("Invalid protocol")
+
+        # when port isn't specified switch to default
+        if not port:
+            port = default_port
+
+        username = None
+        password = None
+        if auth is not None:
+            username = auth.get("username", None)
+            password = auth.get("password", None)
+
+        # start the timer
+        start_time = time.monotonic()
+        context = ssl.create_default_context()
+        elapsed_time = 0
+        if ip is None:
+            url = f"{protocol.lower()}://{hostname}"
+            with socket.create_connection((url, 443)) as sock:
+                with context.wrap_socket(sock, server_hostname=url) as ssock:
+                    end_time = 0
+
+                    if auth is None:
+                        end_time = time.monotonic()
+                    else:
+                        # Send authentication data to the server
+                        ssock.sendall(f"{username}:{password}".encode("utf-8"))
+                        # Manually perform the SSL/TLS handshake
+                        ssock.do_handshake()
+                        end_time = time.monotonic()
+
+                    elapsed_time = end_time - start_time
+        else:
+            with socket.create_connection((ip, 443)) as sock:
+                with context.wrap_socket(sock, server_hostname=ip) as ssock:
+                    end_time = 0
+
+                    if auth is None:
+                        end_time = time.monotonic()
+                    else:
+                        # Send authentication data to the server
+                        ssock.sendall(f"{username}:{password}".encode("utf-8"))
+                        # Manually perform the SSL/TLS handshake
+                        ssock.do_handshake()
+                        end_time = time.monotonic()
+
+                    elapsed_time = end_time - start_time
+        return elapsed_time
+
+    except ssl.SSLError as e:
+        print(e)
+        # handle SSL errors
+        return None
+
+    except:
+        # handle other errors
+        return None
+
+
+def get_response_time(
+    hostname=None,
+    ip=None,
+    protocol="HTTPS",
+    timeout=5,
+    port=None,
+    auth=None,
+    headers=None,
+):
+    """
+    Returns the response time in seconds
+    """
+    try:
+        if ip and hostname:
+            return None
+
+        if protocol == "HTTPS":
+            default_port = 443
+        elif protocol == "HTTP":
+            default_port = 80
+        elif protocol == "ICMP":
+            return None  # ICMP doesn't require a response, so return None
+        else:
+            raise ValueError("Invalid protocol")
+
+        # prepare default port
+        if not port:
+            port = default_port
+
+        # prepare url
+        url = f"{protocol.lower()}://"
+        if hostname is None:
+            url += f"{ip}:{port}"
+        else:
+            url += f"{hostname}"
+
+        # add custom headers
+        if headers is None:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+        # add authentication headers
+        if auth is not None:
+            headers["Authorization"] = "Bearer " + auth
+
+        start_time = time.time()
+        requests.get(url=url, timeout=timeout, headers=headers)
+        end_time = time.time()
+
+        response_time = end_time - start_time
+
+        return response_time
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+        # handle connection errors
+        return None
+
+    except:
+        # handle other errors
+        return None
+
+
+def get_status(
+    hostname=None,
+    ip=None,
+    protocol="HTTPS",
+    timeout=5,
+    port=None,
+    auth=None,
+    headers=None,
+    regex="200",
+):
+    """
+    Returns the status depending the regex match
+    """
+    status_code = 404
+    status = "DOWN"
+    try:
+        # need either url or ip
+        if hostname and ip:
+            return None
+
+        # set-up default port if empty
+        if protocol == "HTTPS":
+            default_port = 443
+        elif protocol == "HTTP":
+            default_port = 80
+        elif protocol == "ICMP":
+            return None  # ICMP doesn't require a connection, so return 0
+        else:
+            raise ValueError("Invalid protocol")
+
+        if not port:
+            port = default_port
+
+        # prepare url
+        url = f"{protocol.lower()}://"
+        if hostname is None:
+            url += f"{ip}:{port}"
+        else:
+            url += f"{hostname}"
+
+        # add custom headers
+        if headers is None:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+
+        # add authentication headers
+        if auth is not None:
+            headers["Authorization"] = "Bearer " + auth
+
+        # send requests
+        start_time = time.time()
+        response = requests.get(url=url, timeout=timeout, headers=headers)
+        status_code = response.status_code
+        end_time = time.time()
+
+        # calculate connection time
+        connection_time = end_time - start_time
+
+        return connection_time
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+        # handle connection errors
+        status_code = 0
+
+    except:
+        # handle other errors
+        status_code = 0
 
     finally:
-        return result
+        if re.search(regex, str(status_code)):
+            return "OK"
+        else:
+            return "DOWN"
