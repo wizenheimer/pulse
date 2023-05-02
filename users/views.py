@@ -23,14 +23,16 @@ from django.urls import reverse
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.exceptions import ValidationError
+from rest_framework import viewsets
 import jwt
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     PasswordResetSerializer,
     GeneratePasswordResetToken,
+    TeamSerializer,
 )
-from .models import User
+from .models import User, Team, TeamAssignment
 
 
 class RegistrationView(GenericAPIView):
@@ -142,3 +144,31 @@ class PasswordResetRequest(GenericAPIView):
         )
 
         return Response({"message": "Password reset request sent successfully."})
+
+
+# fetch team details only if you're part of the team
+# endpoint : fetch teams you're part of
+# make user the admin of the team which they create
+# create invites handler : CRUD
+# put up permission
+
+
+class TeamViewset(viewsets.ModelViewSet):
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return user.teams.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        user = self.request.user
+        team = serializer.instance
+        assignment = TeamAssignment(team=team, user=user, is_admin=True)
+        assignment.save()
+        # team.users.add(user)
+        # team.save()
+        return Response({"status": "success", "pk": serializer.instance.pk})

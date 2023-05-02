@@ -20,6 +20,9 @@ class Team(models.Model):
         self.token = "".join(choice(ascii_uppercase) for i in range(16))
         return self.token
 
+    def get_token(self):
+        return self.token
+
     def save(self, *args, **kwargs):
         # create a new token
         token = self.update_token()

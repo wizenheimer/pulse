@@ -80,7 +80,7 @@ class Monitor(models.Model):
     # monitor descriptors
     name = models.CharField(max_length=256, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    tags = models.ManyToManyField(Tags, related_name="monitors")
+    tags = models.ManyToManyField(Tags, related_name="monitors", null=True, blank=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
 
     # monitor specifiers

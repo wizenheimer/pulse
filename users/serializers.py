@@ -10,7 +10,7 @@ from django.utils.encoding import (
     DjangoUnicodeDecodeError,
 )
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from .models import User
+from .models import User, Team
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -100,3 +100,9 @@ class GeneratePasswordResetToken(serializers.Serializer):
         if not User.objects.filter(email=email).exists():
             raise ValidationError("User doesnot exist.")
         return attrs
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = "__all__"

@@ -8,13 +8,13 @@ from .models import Monitor, MonitorResult
 
 # from users.models import MonitorAssignment
 from .serializers import MonitorSerializer, MonitorResultSerializer
-from .permissions import isParent
+# from .permissions import isParent
 
 
 class MonitorViewset(viewsets.ModelViewSet):
     queryset = Monitor.objects.all()
     serializer_class = MonitorSerializer
-    permission_classes = [isParent]
+    # permission_classes = [isParent]
 
     @action(detail=True, methods=["get"])
     def summary(self, request, pk=None):
