@@ -232,3 +232,51 @@ class TeamViewset(viewsets.ModelViewSet):
             assignment.save()
 
             return Response({"message": "Invited to the Team", "pk": team_id})
+
+    @action(detail=True, methods=["post"])
+    def assign_role(self, request, pk=None):
+        team = get_object_or_404(Team, pk=pk)
+        user = request.user
+        assign_to = self.request.data.get("assign_to")
+        assign_user = get_object_or_404(User, email=assign_to)
+        assign_role = self.request.data.get("assign_role")
+        remove_role = self.request.data.get("remove_role")
+
+        roles = [
+            "admin",
+            "billing",
+            "manager",
+            "member",
+        ]
+        if assign_role and remove_role:
+            return Response({"error": "Grant parameters missing."})
+
+        if assign_role not in roles:
+            return Response({"error": "Grant parameters missing."})
+
+        if not team.users.filter(id=user.id).exists():
+            return Response(
+                {"error": "You are not authorized to change roles for this team."}
+            )
+
+        assignment = TeamAssignment.objects.get(team=team, user=user)
+
+        if not assignment.is_admin:
+            return Response(
+                {"error": "You are not authorized to change roles for this team."}
+            )
+
+        assignment = TeamAssignment.objects.get(team=team, user=assign_user)
+
+        if assign_role == "admin":
+            assignment.is_admin = True
+        elif assign_role == "billing":
+            assignment.is_billing = True
+        elif assign_role == "manager":
+            assignment.is_manager = True
+        elif assign_role == "member":
+            assignment.is_member = True
+
+        assignment.save()
+
+        return Response({"message": "Permission changed successfully."})
