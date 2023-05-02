@@ -1,6 +1,34 @@
 from django.db import models
 from users.models import User, Guest, Team
-from .managers import MonitorManager
+from util.fernet_util import decrypt
+from .managers import MonitorManager, CredentialsManager
+
+
+class Credentials(models.Model):
+    """Encrypted Credentials model"""
+
+    username = models.CharField(max_length=500, null=True, blank=True)
+    password = models.CharField(max_length=500, null=True, blank=True)
+    token = models.CharField(max_length=500, null=True, blank=True)
+    # metadata
+    is_active = models.BooleanField(default=True)
+
+    # for encrypting and decrypting credentials on the fly
+    objects = CredentialsManager()
+
+    def decrypt(self):
+        """
+        Decrypts the given credentials in the data dictionary
+        """
+        data = self.__dict__
+        decrypted_data = {}
+        decrypted_data["username"] = decrypt(data["username"])
+        decrypted_data["password"] = decrypt(data["password"])
+        decrypted_data["token"] = decrypt(data["token"])
+        return decrypted_data
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Tags(models.Model):
@@ -71,6 +99,8 @@ class Monitor(models.Model):
     # meta data
     last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    # determine if the monitor could have guest access
+    is_public = models.BooleanField(default=False)
 
     # active subscibers
     subscribers = models.ManyToManyField(
@@ -78,6 +108,14 @@ class Monitor(models.Model):
     )
     guests = models.ManyToManyField(
         Guest, through="GuestAssignment", related_name="monitors"
+    )
+    # credentials for monitors
+    credentials = models.OneToOneField(
+        Credentials,
+        related_name="monitor",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
 
     # custom model manager
