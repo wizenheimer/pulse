@@ -15,7 +15,7 @@ from .views import (
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
-router.register(r"teams", TeamViewset, basename="monitor_viewset")
+router.register(r"teams", TeamViewset, basename="teams")
 
 # The API URLs are now determined automatically by the router.
 

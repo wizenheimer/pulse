@@ -25,6 +25,8 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.exceptions import ValidationError
 from rest_framework import viewsets
 import jwt
+from rest_framework.decorators import action
+from util import invites_util as invite
 from .serializers import (
     RegisterSerializer,
     LoginSerializer,
@@ -146,9 +148,9 @@ class PasswordResetRequest(GenericAPIView):
         return Response({"message": "Password reset request sent successfully."})
 
 
-# fetch team details only if you're part of the team
-# endpoint : fetch teams you're part of
-# make user the admin of the team which they create
+# DONE: fetch team details only if you're part of the team
+# DONE: endpoint : fetch teams you're part of
+# DONE: make user the admin of the team which they create
 # create invites handler : CRUD
 # put up permission
 
@@ -168,7 +170,65 @@ class TeamViewset(viewsets.ModelViewSet):
         user = self.request.user
         team = serializer.instance
         assignment = TeamAssignment(team=team, user=user, is_admin=True)
+        assignment.is_admin = True
         assignment.save()
         # team.users.add(user)
         # team.save()
         return Response({"status": "success", "pk": serializer.instance.pk})
+
+    @action(detail=True, methods=["post", "get"])
+    def invite(self, request, pk=None):
+        if request.method == "POST":
+            team = get_object_or_404(Team, pk=pk)
+            user = request.user
+            if not team.users.filter(id=user.id).exists():
+                return Response(
+                    {"error": "You are not authorized to send invites for this team"}
+                )
+
+            assignment = TeamAssignment.objects.get(team=team, user=user)
+
+            if not assignment.is_admin:
+                return Response(
+                    {"error": "You are not authorized to send invites for this team"}
+                )
+
+            email = self.request.data.get("email")
+            if email is None:
+                return Response({"error": "Email is required for generating an invite"})
+
+            User.objects.get_or_create(email=email)
+
+            absurl = invite.get_invite_url(request, user.id, team.id, email)
+
+            # Console Backend won't work without this.
+            send_mail(
+                subject="You've been invited to the team🥳",
+                message=f"Get Started:{absurl}",
+                from_email="djangomailer@mail.com",
+                recipient_list=[
+                    email,
+                ],
+            )
+
+            return Response({"message": "Invite shared successfully."})
+        else:
+            team = self.request.query_params.get("team", None)
+            sender = self.request.query_params.get("from", None)
+            email = self.request.query_params.get("to", None)
+
+            data = invite.decode_absurl(team, sender, email)
+
+            team_id = data["team_id"]
+            sender_id = data["sender_id"]
+            email_id = data["email_id"]
+
+            # user = User.objects.get_or_create(email=email_id)
+            user = User.objects.get(email=email_id)
+            team = Team.objects.get(id=team_id)
+
+            assignment = TeamAssignment(user=user, team=team)
+            assignment.is_member = True
+            assignment.save()
+
+            return Response({"message": "Invited to the Team", "pk": team_id})
