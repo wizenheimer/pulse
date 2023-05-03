@@ -14,6 +14,15 @@ class MonitorManager(models.Manager):
         return super().get_queryset().filter(is_active=True).filter(is_public=True)
 
 
+class CronMonitorManager(models.Manager):
+    """
+    Manager for the Cron Class
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class CredentialsManager(models.Manager):
     """
     Manager for accessing credentials

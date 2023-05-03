@@ -1,7 +1,7 @@
 from django.db import models
 from users.models import User, Guest, Team
 from util.fernet_util import decrypt
-from .managers import MonitorManager, CredentialsManager
+from .managers import MonitorManager, CredentialsManager, CronMonitorManager
 
 
 class Credentials(models.Model):
@@ -81,13 +81,6 @@ class Monitor(models.Model):
         ("60", "1 Minute"),
         ("300", "5 Minutes"),
         ("1800", "30 Minutes"),
-        ("3600", "1 Hour"),
-        ("21600", "6 Hour"),
-        ("43200", "12 Hour"),
-        ("64800", "18 Hour"),
-        ("86400", "1 Day"),
-        ("259200", "3 Day"),
-        ("604800", "7 Day"),
     )
 
     # monitor descriptors
@@ -112,7 +105,6 @@ class Monitor(models.Model):
     # regex for mapping OK status and performing the keyword match
     regex = models.CharField(max_length=250, default="200")
 
-    # TODO : move cron monitor + monitor would expect a request at this frequency
     # for the rest it would make the request at this frequency
     frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
 
@@ -156,6 +148,66 @@ class Monitor(models.Model):
 
     # custom model manager
     objects = MonitorManager()
+
+    def __str__(self):
+        return self.name
+
+
+class CronMonitor(models.Model):
+    """
+    Cron job monitor
+
+    The way monitoring works is that you need to periodically make requests to a monitor's unique URL in order for the monitor NOT to create a new incident.
+    """
+
+    PROTOCOL_CHOICES = (
+        ("HTTP", "HTTP"),
+        ("HTTPS", "HTTPS"),
+    )
+
+    # cron descriptors
+    name = models.CharField(max_length=256, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    tags = models.ManyToManyField(Tags, related_name="cron_monitors")
+    is_active = models.BooleanField(default=False)
+    # cron owners
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+
+    # webhook endpoint
+    cron_url = models.URLField()
+
+    # monitor specifiers
+    protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
+    ip = models.GenericIPAddressField(max_length=255, blank=True, null=True)
+
+    # monitoring regions
+    region_US1 = models.BooleanField(default=True)
+    region_US2 = models.BooleanField(default=False)
+    region_EU1 = models.BooleanField(default=False)
+    region_Asia1 = models.BooleanField(default=False)
+
+    # monitor would expect a request at this frequency
+    frequency = models.PositiveIntegerField(default=86400)
+
+    # how long we wait after observing a failure before we start a new incident.
+    confirmation_period = models.PositiveIntegerField(default=5)
+
+    # active subscibers
+    subscribers = models.ManyToManyField(
+        User, through="CronSubscriberAssignment", related_name="crons"
+    )
+
+    # credentials for monitors
+    credentials = models.OneToOneField(
+        Credentials,
+        related_name="cron",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
+    # custom model manager
+    objects = CronMonitorManager()
 
     def __str__(self):
         return self.name
@@ -213,6 +265,15 @@ class SubscriberAssignment(models.Model):
 class GuestAssignment(models.Model):
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
     monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.monitor}"
+
+
+class CronSubscriberAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cron = models.ForeignKey(CronMonitor, on_delete=models.CASCADE)
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
