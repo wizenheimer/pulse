@@ -31,6 +31,25 @@ class Credentials(models.Model):
         return str(self.id)
 
 
+class Alert(models.Model):
+    """
+    Alert determines how the subscribers are notified
+    Subscriber models determine who are notified
+    Escalation policies add and remove subscribers dynamically
+    Call Routing policies determine the sequence of alerts to be sent, typically first responders
+    """
+
+    through_phone = models.BooleanField(default=False)
+    through_sms = models.BooleanField(default=False)
+    through_email = models.BooleanField(default=True)
+    through_notif = models.BooleanField(default=False)
+    through_slack = models.BooleanField(default=False)
+    through_hook = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.id)
+
+
 class Tags(models.Model):
     """
     Tags for organizing Monitors
@@ -93,6 +112,7 @@ class Monitor(models.Model):
     protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
     ip = models.GenericIPAddressField(max_length=255, blank=True, null=True)
     hostname = models.CharField(max_length=255, blank=True, null=True)
+    alert = models.OneToOneField(Alert, on_delete=models.CASCADE, null=True, blank=True)
     # for port monitoring
     port = models.PositiveIntegerField(null=True, blank=True)
 
@@ -172,6 +192,7 @@ class CronMonitor(models.Model):
     is_active = models.BooleanField(default=False)
     # cron owners
     team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+    alert = models.OneToOneField(Alert, on_delete=models.CASCADE, null=True, blank=True)
 
     # webhook endpoint
     cron_url = models.URLField()
@@ -277,4 +298,4 @@ class CronSubscriberAssignment(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.id} subd {self.monitor}"
+        return f"{self.user.id} subd {self.cron}"
