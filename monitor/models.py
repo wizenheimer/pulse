@@ -45,7 +45,15 @@ class Tags(models.Model):
 
 class Monitor(models.Model):
     """
-    Class for URL Monitor
+    Flattened Class for Monitoring
+        - Uptime Monitor
+        - Keyword Monitor
+        - Port Monitor
+        - SSL Monitor
+        - API Monitor
+        - PING Monitor
+
+    Each of these monitors send a request and determine the result based on the response
 
     Protocol Primer
             - ICMP:
@@ -75,32 +83,59 @@ class Monitor(models.Model):
         ("1800", "30 Minutes"),
         ("3600", "1 Hour"),
         ("21600", "6 Hour"),
+        ("43200", "12 Hour"),
+        ("64800", "18 Hour"),
+        ("86400", "1 Day"),
+        ("259200", "3 Day"),
+        ("604800", "7 Day"),
     )
 
     # monitor descriptors
     name = models.CharField(max_length=256, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    tags = models.ManyToManyField(Tags, related_name="monitors", null=True, blank=True)
+    tags = models.ManyToManyField(Tags, related_name="monitors")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
 
     # monitor specifiers
     protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
-    ip = models.GenericIPAddressField(default="127.0.0.1")
+    ip = models.GenericIPAddressField(max_length=255, blank=True, null=True)
+    hostname = models.CharField(max_length=255, blank=True, null=True)
+    # for port monitoring
     port = models.PositiveIntegerField(null=True, blank=True)
-    timeout = models.PositiveIntegerField(default=5)
+
+    # monitoring regions
     region_US1 = models.BooleanField(default=True)
     region_US2 = models.BooleanField(default=False)
     region_EU1 = models.BooleanField(default=False)
     region_Asia1 = models.BooleanField(default=False)
-    # regex for mapping OK status
-    regex = models.CharField(max_length=25, default="200")
+
+    # regex for mapping OK status and performing the keyword match
+    regex = models.CharField(max_length=250, default="200")
+
+    # TODO : move cron monitor + monitor would expect a request at this frequency
+    # for the rest it would make the request at this frequency
     frequency = models.CharField(max_length=25, choices=FREQUENCY_CHOICES, default=30)
+
+    # timeout for the request
+    # check frequency must never be set to a shorter amount of time than the Request timeout period
+    timeout = models.PositiveIntegerField(default=5)
 
     # meta data
     last_checked = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+
+    # determine whether to enable ssl logging for the monitors
+    log_ssl = models.BooleanField(default=False)
+
     # determine if the monitor could have guest access
     is_public = models.BooleanField(default=False)
+
+    # logging configuration
+    # how long we wait after observing a failure before we start a new incident.
+    confirmation_period = models.PositiveIntegerField(default=5)
+
+    # how long a monitor has to be up before we automatically mark it as recovered, and the related incident as resolved.
+    recovery_period = models.PositiveIntegerField(default=5)
 
     # active subscibers
     subscribers = models.ManyToManyField(
@@ -109,6 +144,7 @@ class Monitor(models.Model):
     guests = models.ManyToManyField(
         Guest, through="GuestAssignment", related_name="monitors"
     )
+
     # credentials for monitors
     credentials = models.OneToOneField(
         Credentials,
@@ -123,6 +159,18 @@ class Monitor(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DomainExpiration(models.Model):
+    hostname = models.CharField(max_length=750)
+    expires_on = models.DateTimeField()
+    registered_on = models.DateField()
+    updated_on = models.DateTimeField()
+    # determine domain owner
+    team = models.ForeignKey(Team, blank=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.hostname
 
 
 class MonitorResult(models.Model):
