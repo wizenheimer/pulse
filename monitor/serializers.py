@@ -1,20 +1,38 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import Monitor, MonitorResult
+from .models import (
+    Monitor,
+    MonitorResult,
+    Tags,
+    Credentials,
+    Alert,
+    Monitor,
+    CronMonitor,
+    DomainExpiration,
+    Team,
+    User,
+)
 
 
-class MonitorSerializer(serializers.ModelSerializer):
-    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
+class AlertSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Monitor
+        model = Alert
         fields = "__all__"
 
 
-class MonitorResultSerializer(serializers.ModelSerializer):
-    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+class MonitorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Monitor
+        fields = [
+            "name",
+            "description",
+            "type",
+            "last_checked",
+        ]
 
+
+class MonitorResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = MonitorResult
         fields = "__all__"

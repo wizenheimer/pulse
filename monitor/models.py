@@ -95,6 +95,11 @@ class Monitor(models.Model):
         ("ICMP", "ICMP"),
     )
 
+    MONITOR_CHOICES = (
+        ("Status Monitor", "Status Monitor"),
+        ("Keyword Monitor", "Keyword Monitor"),
+    )
+
     FREQUENCY_CHOICES = (
         ("30", "30 Seconds"),
         ("60", "1 Minute"),
@@ -106,7 +111,14 @@ class Monitor(models.Model):
     name = models.CharField(max_length=256, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     tags = models.ManyToManyField(Tags, related_name="monitors")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, null=True, blank=True, related_name="monitors"
+    )
+    type = models.CharField(
+        max_length=255,
+        choices=MONITOR_CHOICES,
+        default="Status Monitor",
+    )
 
     # monitor specifiers
     protocol = models.CharField(max_length=8, choices=PROTOCOL_CHOICES, default="HTTPS")
@@ -191,7 +203,9 @@ class CronMonitor(models.Model):
     tags = models.ManyToManyField(Tags, related_name="cron_monitors")
     is_active = models.BooleanField(default=False)
     # cron owners
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, null=True, blank=True, related_name="crons"
+    )
     alert = models.OneToOneField(Alert, on_delete=models.CASCADE, null=True, blank=True)
 
     # webhook endpoint
