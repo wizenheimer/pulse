@@ -42,13 +42,14 @@ class RequestsManager(models.Manager):
         """
         if "auth_username" in credentials:
             auth_username = credentials.pop("auth_username")
-            credentials.push("auth_username", encrypt(auth_username))
+            credentials["auth_username"] = encrypt(auth_username)
 
         if "auth_password" in credentials:
             auth_password = credentials.pop("auth_password")
-            credentials.push("auth_password", encrypt(auth_password))
+            credentials["auth_password"] = encrypt(auth_password)
 
         if "token" in credentials:
-            token = credentials.pop("token", encrypt(token))
+            token = credentials.pop("token")
+            credentials["token"] = encrypt(token)
 
         return super().create(**credentials)
