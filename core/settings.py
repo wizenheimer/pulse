@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "users",
     # "monitor", deprecated
     "logger",
+    "incident",
 ]
 
 MIDDLEWARE = [

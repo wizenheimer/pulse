@@ -1,45 +1,25 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from users.models import User, Guest, Team
+from incident.models import EscalationPolicy
 from .managers import RequestsManager, EndpointManager, CronManager
-
-
-# Custom fields for models
-# TODO: Escalation Policy ID in Endpoint and Cron
-class SeparatedValuesField(models.TextField):
-    # __metaclass__ = models.SubfieldBase
-
-    def __init__(self, *args, **kwargs):
-        self.token = kwargs.pop("token", ",")
-        super(SeparatedValuesField, self).__init__(*args, **kwargs)
-
-    def to_python(self, value):
-        if not value:
-            return
-        if isinstance(value, list):
-            return value
-        return value.split(self.token)
-
-    def get_db_prep_value(self, value):
-        if not value:
-            return
-        assert isinstance(value, list) or isinstance(value, tuple)
-        return self.token.join([str(s) for s in value])
-
-    def value_to_string(self, obj):
-        value = self._get_val_from_obj(obj)
-        return self.get_db_prep_value(value)
 
 
 class Collection(models.Model):
     """
-    Model for collecting Endpoints and Crons as Service
+    Model for collecting inter-related Endpoints and Crons as Service Collection
+    Each Collection has its own collection policy
+    Since endpoints and crons are shared across collections, there could be multiple policies triggered concurrently for different teams
     """
 
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    # attach escalation policy to a service
+    escalation_policy = models.ForeignKey(
+        EscalationPolicy, null=True, blank=True, on_delete=models.DO_NOTHING
+    )
 
     def __str__(self) -> str:
         return self.name
