@@ -31,7 +31,20 @@ class SeparatedValuesField(models.TextField):
         return self.get_db_prep_value(value)
 
 
-# Create your models here.
+class Collection(models.Model):
+    """
+    Model for collecting Endpoints and Crons as Service
+    """
+
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class RequestHandler(models.Model):
     """
     Details of the request.
@@ -172,8 +185,8 @@ class Endpoint(models.Model):
     is_active = models.BooleanField(default=True)
 
     objects = EndpointManager()
-    # TODO: active subscriber
-    # TODO: subscriber endpoints
+
+    # active subscriptions
     subscribers = models.ManyToManyField(
         User, through="SubscriberAssignment", related_name="endpoints"
     )
@@ -182,6 +195,8 @@ class Endpoint(models.Model):
     )
 
     # TODO: team
+    # collections relations
+    collection = models.ManyToManyField(Collection, related_name="endpoints")
 
     def __str__(self):
         return str(self.id)
@@ -239,13 +254,14 @@ class CronHandler(models.Model):
 
     objects = CronManager()
 
-    # TODO: active subscriber
     # active subscibers
     subscribers = models.ManyToManyField(
         User, through="CronSubscriberAssignment", related_name="crons"
     )
 
     # TODO: team
+    # collections relations
+    collection = models.ManyToManyField(Collection, related_name="crons")
 
     def __str__(self):
         return str(self.id)

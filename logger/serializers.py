@@ -1,11 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from .models import (
-    Endpoint,
-    CronHandler,
-    RequestHandler,
-)
+from .models import Endpoint, CronHandler, RequestHandler, Collection
 
 
 class RequestHandlerSerializer(serializers.ModelSerializer):
@@ -37,4 +33,10 @@ class EndpointSerializer(serializers.ModelSerializer):
 class CronHandlerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CronHandler
+        fields = "__all__"
+
+
+class CollectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Collection
         fields = "__all__"
