@@ -10,5 +10,7 @@ router.register(r"request", views.RequestHandlerViewset, basename="request_views
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
+    path("team-subscribe/", views.teammate_subscribe, name="team-subscribe"),
+    path("guest-subscribe/", views.guest_subscribe, name="guest-subscribe"),
     path("", include(router.urls)),
 ]

@@ -173,6 +173,7 @@ class Endpoint(models.Model):
 
     objects = EndpointManager()
     # TODO: active subscriber
+    # TODO: subscriber endpoints
     subscribers = models.ManyToManyField(
         User, through="SubscriberAssignment", related_name="endpoints"
     )
