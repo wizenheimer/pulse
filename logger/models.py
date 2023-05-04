@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from .managers import RequestsManager, EndpointManager, CronManager
 
 
 # Custom fields for models
@@ -54,12 +55,20 @@ class RequestHandler(models.Model):
     auth_username = models.CharField(max_length=255, null=True, blank=True)
     # Basic HTTP authentication password to include with the request.
     auth_password = models.CharField(max_length=255, null=True, blank=True)
+    # Token Authentication
+    token = models.CharField(max_length=255, null=True, blank=True)
     # Do you want to keep cookies when redirecting
     remember_cookies = models.BooleanField(default=False)
     # Do you want to log the response in case of failure
     log_response = models.BooleanField(default=False)
     # Do you want to log the screenshot in case of failure
     log_screen = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False)
+
+    objects = RequestsManager()
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Endpoint(models.Model):
@@ -162,9 +171,13 @@ class Endpoint(models.Model):
     # is active
     is_active = models.BooleanField(default=True)
 
+    objects = EndpointManager()
     # TODO: active subscriber
     # TODO: team
     # TODO: custom model monitors managers
+
+    def __str__(self):
+        return str(self.id)
 
 
 class CronHandler(models.Model):
@@ -217,6 +230,11 @@ class CronHandler(models.Model):
     # has public access
     is_public = models.BooleanField(default=False)
 
+    objects = CronManager()
+
     # TODO: active subscriber
     # TODO: team
     # TODO: custom model monitors manager
+
+    def __str__(self):
+        return str(self.id)
