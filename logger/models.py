@@ -16,7 +16,7 @@ class Collection(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    is_paused = models.BooleanField(default=True)
+
     # attach escalation policy to a service
     escalation_policy = models.ForeignKey(
         EscalationPolicy, null=True, blank=True, on_delete=models.DO_NOTHING
@@ -154,8 +154,11 @@ class Endpoint(models.Model):
     # Should we automatically follow redirects when sending the HTTP request?
     follow_requests = models.BooleanField(default=True)
 
-    # Regions - An array of regions to set. Allowed values are ['us', 'eu', 'as', 'au'] or any subset of these regions.
-    regions = models.TextField(blank=True)
+    # regions
+    is_us = models.BooleanField(default=True)
+    is_eu = models.BooleanField(default=False)
+    is_au = models.BooleanField(default=False)
+    is_sn = models.BooleanField(default=False)
 
     # Should we verify SSL certificate validity
     verify_ssl = models.BooleanField(default=False)
@@ -164,7 +167,6 @@ class Endpoint(models.Model):
     is_public = models.BooleanField(default=False)
     # is active
     is_active = models.BooleanField(default=True)
-    is_paused = models.BooleanField(default=True)
 
     objects = EndpointManager()
 
@@ -205,7 +207,6 @@ class CronHandler(models.Model):
 
     # is active
     is_active = models.BooleanField(default=True)
-    is_paused = models.BooleanField(default=True)
 
     # notification perferences
     # Should we send an <?> to the on-call person?

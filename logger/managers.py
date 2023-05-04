@@ -9,7 +9,7 @@ class EndpointManager(models.Manager):
     Manager for the Endpoint Model
     """
 
-    def get_queryset(self):
+    def get_active(self):
         return super().get_queryset().filter(is_active=True)
 
     def get_public_endpoints(self):
