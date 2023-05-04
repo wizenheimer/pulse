@@ -16,7 +16,7 @@ class RequestHandlerSerializer(serializers.ModelSerializer):
 
 class EndpointSerializer(serializers.ModelSerializer):
     # NOTE: requests credentials are shared, has an independent endpoint
-    request = RequestHandlerSerializer(read_only=True)
+    request = RequestHandlerSerializer(read_only=True, required=False)
 
     class Meta:
         model = Endpoint

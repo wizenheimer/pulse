@@ -47,13 +47,13 @@ class RequestHandler(models.Model):
     method = models.CharField(max_length=5, choices=METHOD_CHOICES)
 
     headers = models.JSONField(null=True, blank=True)
-    body = models.TextField(null=True, blank=True)
+    body = models.JSONField(default=list)
 
     # TODO : Encrypt the data
     # Basic HTTP authentication username to include with the request.
-    auth_username = models.CharField(max_length=255)
+    auth_username = models.CharField(max_length=255, null=True, blank=True)
     # Basic HTTP authentication password to include with the request.
-    auth_password = models.CharField(max_length=255)
+    auth_password = models.CharField(max_length=255, null=True, blank=True)
     # Do you want to keep cookies when redirecting
     remember_cookies = models.BooleanField(default=False)
     # Do you want to log the response in case of failure
@@ -100,7 +100,9 @@ class Endpoint(models.Model):
     check_frequency = models.PositiveIntegerField()
 
     # holds the request body
-    request_handler = models.ForeignKey(RequestHandler, on_delete=models.DO_NOTHING)
+    request_handler = models.ForeignKey(
+        RequestHandler, on_delete=models.DO_NOTHING, null=True, blank=True
+    )
 
     # TODO: timeout for the request
     # check frequency must never be set to a shorter amount of time than the Request timeout period
@@ -150,7 +152,7 @@ class Endpoint(models.Model):
     follow_requests = models.BooleanField(default=True)
 
     # Regions - An array of regions to set. Allowed values are ['us', 'eu', 'as', 'au'] or any subset of these regions.
-    regions = SeparatedValuesField()
+    regions = models.JSONField(default=list)
 
     # Should we verify SSL certificate validity
     verify_ssl = models.BooleanField(default=False)
