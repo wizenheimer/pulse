@@ -16,6 +16,7 @@ class Collection(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    is_paused = models.BooleanField(default=True)
     # attach escalation policy to a service
     escalation_policy = models.ForeignKey(
         EscalationPolicy, null=True, blank=True, on_delete=models.DO_NOTHING
@@ -56,7 +57,7 @@ class RequestHandler(models.Model):
     log_response = models.BooleanField(default=False)
     # Do you want to log the screenshot in case of failure
     log_screen = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
     objects = RequestsManager()
 
@@ -108,7 +109,7 @@ class Endpoint(models.Model):
 
     # TODO: timeout for the request
     # check frequency must never be set to a shorter amount of time than the Request timeout period
-    timeout = models.PositiveIntegerField(default=5)
+    timeout = models.PositiveIntegerField()
 
     # logging configuration
     # how long we wait after observing a failure before we start a new incident.
@@ -154,7 +155,7 @@ class Endpoint(models.Model):
     follow_requests = models.BooleanField(default=True)
 
     # Regions - An array of regions to set. Allowed values are ['us', 'eu', 'as', 'au'] or any subset of these regions.
-    regions = models.JSONField(default=list)
+    regions = models.TextField(blank=True)
 
     # Should we verify SSL certificate validity
     verify_ssl = models.BooleanField(default=False)
@@ -163,6 +164,7 @@ class Endpoint(models.Model):
     is_public = models.BooleanField(default=False)
     # is active
     is_active = models.BooleanField(default=True)
+    is_paused = models.BooleanField(default=True)
 
     objects = EndpointManager()
 
@@ -203,6 +205,7 @@ class CronHandler(models.Model):
 
     # is active
     is_active = models.BooleanField(default=True)
+    is_paused = models.BooleanField(default=True)
 
     # notification perferences
     # Should we send an <?> to the on-call person?
