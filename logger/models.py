@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from users.models import User, Guest, Team
 from .managers import RequestsManager, EndpointManager, CronManager
 
 
@@ -50,7 +51,6 @@ class RequestHandler(models.Model):
     headers = models.JSONField(null=True, blank=True)
     body = models.JSONField(default=list)
 
-    # TODO : Encrypt the data
     # Basic HTTP authentication username to include with the request.
     auth_username = models.CharField(max_length=255, null=True, blank=True)
     # Basic HTTP authentication password to include with the request.
@@ -173,8 +173,14 @@ class Endpoint(models.Model):
 
     objects = EndpointManager()
     # TODO: active subscriber
+    subscribers = models.ManyToManyField(
+        User, through="SubscriberAssignment", related_name="endpoints"
+    )
+    guests = models.ManyToManyField(
+        Guest, through="GuestAssignment", related_name="endpoints"
+    )
+
     # TODO: team
-    # TODO: custom model monitors managers
 
     def __str__(self):
         return str(self.id)
@@ -233,8 +239,39 @@ class CronHandler(models.Model):
     objects = CronManager()
 
     # TODO: active subscriber
+    # active subscibers
+    subscribers = models.ManyToManyField(
+        User, through="CronSubscriberAssignment", related_name="crons"
+    )
+
     # TODO: team
-    # TODO: custom model monitors manager
 
     def __str__(self):
         return str(self.id)
+
+
+class SubscriberAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    endpoint = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.endpoint}"
+
+
+class GuestAssignment(models.Model):
+    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
+    endpoint = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.endpoint}"
+
+
+class CronSubscriberAssignment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cron = models.ForeignKey(CronHandler, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.id} subd {self.cron}"
