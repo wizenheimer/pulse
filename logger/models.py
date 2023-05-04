@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 
 # Custom fields for models
@@ -155,7 +156,64 @@ class Endpoint(models.Model):
 
     # has public access
     is_public = models.BooleanField(default=False)
+    # is active
+    is_active = models.BooleanField(default=True)
 
     # TODO: active subscriber
     # TODO: team
-    # TODO: custom model monitors
+    # TODO: custom model monitors managers
+
+
+class CronHandler(models.Model):
+    """
+    Cron Monitoring Model
+    """
+
+    LOGGER_TYPE = [
+        ("cron", "CRON Monitor"),
+        ("hook", "Hook Monitor"),
+    ]
+
+    # type of monitoring
+    logger_type = models.CharField(max_length=255, choices=LOGGER_TYPE)
+    # url for the webhook
+    # TODO: webhook creation endpoint, implements a rotated token to identify the cron
+    url = models.URLField()
+    name = models.CharField(max_length=255, default="Logger")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # is active
+    is_active = models.BooleanField(default=True)
+
+    # notification perferences
+    # Should we send an <?> to the on-call person?
+    push_email = models.BooleanField(default=True)
+    push_sms = models.BooleanField(default=False)
+    push_call = models.BooleanField(default=False)
+    push_notif = models.BooleanField(default=False)
+
+    # How often should we expect this heartbeat in seconds
+    period = models.PositiveIntegerField(
+        validators=[
+            MinValueValidator(30),
+        ],
+        default=30,
+    )
+    # Recommend setting this to approx. 20% of period
+    # Threshold for accepting delay Minimum value: 0 seconds
+
+    # Logging configuration
+    # how long we wait after observing a failure before we start a new incident.
+    confirmation_period = models.PositiveIntegerField(default=0)
+
+    # escalation period
+    # How long to wait before escalating the incident alert to the team. Leave blank to disable escalating to the entire team.
+    escalation_period = models.PositiveIntegerField(default=5)
+
+    # has public access
+    is_public = models.BooleanField(default=False)
+
+    # TODO: active subscriber
+    # TODO: team
+    # TODO: custom model monitors manager
