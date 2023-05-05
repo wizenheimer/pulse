@@ -10,7 +10,7 @@ from .models import OnCallCalendar
 
 
 # Create your views here.
-# TODO: Parse Date as String
+# TODO: Validate ICAL URLs see this : https://stackoverflow.com/questions/57858011/how-to-validate-if-ical-icalendar-file-is-valid-using-javascript
 class OnCallCalendarViewset(viewsets.ModelViewSet):
     queryset = OnCallCalendar.objects.all()
     serializer_class = OnCallCalendarSerializer
