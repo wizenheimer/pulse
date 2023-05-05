@@ -4,16 +4,16 @@ from django.db import models
 from util.fernet_util import encrypt, decrypt
 
 
-class EndpointManager(models.Manager):
-    """
-    Manager for the Endpoint Model
-    """
+# class EndpointManager(models.Manager):
+#     """
+#     Manager for the Endpoint Model
+#     """
 
-    def get_active(self):
-        return super().get_queryset().filter(is_active=True)
+#     def get_active(self):
+#         return super().get_queryset().filter(is_active=True)
 
-    def get_public_endpoints(self):
-        return super().get_queryset().filter(is_active=True).filter(is_public=True)
+#     def get_public_endpoints(self):
+#         return super().get_queryset().filter(is_active=True).filter(is_public=True)
 
 
 class CronManager(models.Manager):

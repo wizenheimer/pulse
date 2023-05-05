@@ -2,10 +2,10 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from users.models import User, Guest, Team
 from incident.models import EscalationPolicy
-from .managers import RequestsManager, EndpointManager, CronManager
+from .managers import RequestsManager, CronManager
 
 
-class Collection(models.Model):
+class Service(models.Model):
     """
     Model for collecting inter-related Endpoints and Crons as Service Collection
     Each Collection has its own collection policy
@@ -16,11 +16,20 @@ class Collection(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=False)
 
     # attach escalation policy to a service
     escalation_policy = models.ForeignKey(
         EscalationPolicy, null=True, blank=True, on_delete=models.DO_NOTHING
     )
+    # active subscriptions
+    subscribers = models.ManyToManyField(
+        User, through="SubscriberAssignment", related_name="services"
+    )
+    guests = models.ManyToManyField(
+        Guest, through="GuestAssignment", related_name="services"
+    )
+    # TODO: team relationship
 
     def __str__(self) -> str:
         return self.name
@@ -38,7 +47,6 @@ class RequestHandler(models.Model):
         ("PATCH", "PATCH"),
     ]
 
-    # TODO: Validators
     # HTTP Method used to make a request. Valid options: GET, HEAD, POST, PUT, PATCH
     method = models.CharField(max_length=5, choices=METHOD_CHOICES)
 
@@ -90,7 +98,6 @@ class Endpoint(models.Model):
 
     # Required if monitor_type is set to tcp, udp, smtp, pop, or imap.
     # tcp and udp monitors accept any ports, while smtp, pop, and imap accept only the specified ports corresponding with their servers (e.g. 25,465,587 for smtp).
-    # TODO : Create Field Level Validators
     port = models.CharField(max_length=255, null=True, blank=True)
 
     # notification perferences
@@ -107,7 +114,6 @@ class Endpoint(models.Model):
         RequestHandler, on_delete=models.DO_NOTHING, null=True, blank=True
     )
 
-    # TODO: timeout for the request
     # check frequency must never be set to a shorter amount of time than the Request timeout period
     timeout = models.PositiveIntegerField()
 
@@ -164,23 +170,14 @@ class Endpoint(models.Model):
     verify_ssl = models.BooleanField(default=False)
 
     # has public access
-    is_public = models.BooleanField(default=False)
+    # is_public = models.BooleanField(default=False)
     # is active
-    is_active = models.BooleanField(default=True)
+    # is_active = models.BooleanField(default=True)
 
-    objects = EndpointManager()
+    # objects = EndpointManager()
 
-    # active subscriptions
-    subscribers = models.ManyToManyField(
-        User, through="SubscriberAssignment", related_name="endpoints"
-    )
-    guests = models.ManyToManyField(
-        Guest, through="GuestAssignment", related_name="endpoints"
-    )
-
-    # TODO: team
     # collections relations
-    collection = models.ManyToManyField(Collection, related_name="endpoints")
+    service = models.ManyToManyField(Service, related_name="endpoints")
 
     def __str__(self):
         return str(self.id)
@@ -239,13 +236,12 @@ class CronHandler(models.Model):
     objects = CronManager()
 
     # active subscibers
-    subscribers = models.ManyToManyField(
-        User, through="CronSubscriberAssignment", related_name="crons"
-    )
+    # subscribers = models.ManyToManyField(
+    #     User, through="CronSubscriberAssignment", related_name="crons"
+    # )
 
-    # TODO: team
     # collections relations
-    collection = models.ManyToManyField(Collection, related_name="crons")
+    service = models.ManyToManyField(Service, related_name="crons")
 
     def __str__(self):
         return str(self.id)
@@ -253,26 +249,26 @@ class CronHandler(models.Model):
 
 class SubscriberAssignment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    endpoint = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.id} subd {self.endpoint}"
+        return f"{self.user.id} subd {self.service}"
 
 
 class GuestAssignment(models.Model):
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
-    endpoint = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.id} subd {self.endpoint}"
+        return f"{self.user.id} subd {self.service}"
 
 
-class CronSubscriberAssignment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    cron = models.ForeignKey(CronHandler, on_delete=models.CASCADE)
-    start_date = models.DateTimeField(auto_now_add=True)
+# class CronSubscriberAssignment(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     cron = models.ForeignKey(CronHandler, on_delete=models.CASCADE)
+#     start_date = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.id} subd {self.cron}"
+#     def __str__(self):
+#         return f"{self.user.id} subd {self.cron}"

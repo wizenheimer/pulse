@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from .models import Endpoint, CronHandler, RequestHandler, Collection
+from .models import Endpoint, CronHandler, RequestHandler, Service
 
 
 # TODO: Snignal queue configuration
@@ -67,7 +67,7 @@ class CronHandlerSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CollectionSerializer(serializers.ModelSerializer):
+class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Collection
+        model = Service
         fields = "__all__"

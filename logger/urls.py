@@ -7,7 +7,7 @@ router = DefaultRouter()
 router.register(r"endpoint", views.EndpointViewset, basename="logger_viewset")
 router.register(r"cron", views.CronHandlerViewset, basename="cron_viewset")
 router.register(r"request", views.RequestHandlerViewset, basename="request_viewset")
-router.register(r"collections", views.CollectionViewset, basename="collection_viewset")
+router.register(r"service", views.ServiceViewset, basename="service_viewset")
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
