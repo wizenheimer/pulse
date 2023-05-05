@@ -1,3 +1,4 @@
+from audioop import reverse
 import arrow
 from django.db import models
 from users.models import Team, User
@@ -6,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # TODO: Figure out how to optimally store graphs and nodes
 # TODO: Calendar URL Validator
+# TODO: Refer Previously generated Actions, Levels as Templates
 
 
 class OnCallCalendar(models.Model):
@@ -65,6 +67,7 @@ class EscalationLevel(models.Model):
         EscalationPolicy,
         through="EscalationLevelAssignment",
         help_text="Which policy is the escalation level part of",
+        related_name="levels",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -83,12 +86,31 @@ class EscalationAction(models.Model):
         ("SLACK", "Post a message to Slack"),
         ("LOG", "Create a log message"),
     )
+    ENTITY_TYPES = (
+        ("ATTRIBUTE", "Parse as Attribute"),
+        ("ID", "Parse as id"),
+        ("CS:ID", "Parse as comma-separated id"),
+        ("EMAIL", "Parse as email address"),
+        ("CS:EMAIL", "Parse as comma-separated email address"),
+        ("SMS", "Parse as SMS"),
+        ("CS:SMS", "Parse as comma-separated SMS"),
+        ("PHONE", "Parse as phone number"),
+        ("CS:PHONE", "Parse as comma-separated phone number"),
+        ("CHANNEL", "Parse as slack channel"),
+        ("CS:CHANNEL", "Parse as comma-separated slack channel"),
+        ("JIRA", "Parse as JIRA Ticket"),
+        ("HOOK", "Parse as Webhook"),
+        ("EX:HOOK", "Parse as External Webhook"),
+    )
     name = models.CharField(max_length=255, default="MyAction")
     system = models.CharField(
         max_length=255, choices=ACTION_CHOICES, blank=True, null=True, default="LOG"
     )
+    entity_type = models.CharField(
+        max_length=255, choices=ENTITY_TYPES, default="Attribute"
+    )
     context = models.TextField()
-    recipient = models.TextField()
+    entity = models.TextField()
 
     def __str__(self):
         return self.name
