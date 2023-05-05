@@ -1,7 +1,7 @@
 import arrow
 from django.db import models
 from users.models import Team, User
-from util.calendar_util import get_on_call
+from django.core.exceptions import ObjectDoesNotExist
 
 
 # TODO: Figure out how to optimally store graphs and nodes
@@ -12,12 +12,6 @@ class OnCallCalendar(models.Model):
     description = models.TextField()
     url = models.URLField()
     timezone = models.CharField(max_length=255)
-
-    def currently_on_call(self):
-        return get_on_call(
-            url=self.url,
-            timezone=self.timezone,
-        )
 
     def __str__(self):
         return self.name

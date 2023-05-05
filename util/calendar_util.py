@@ -23,15 +23,19 @@ def get_on_call(
 
     calendar = Calendar(requests.get(url).text)
     # convert the current date to a date in the calendar timezone
-    begin_date = arrow.get(date).to(timezone)
+    begin_date = (
+        arrow.get(date)
+        .to(timezone)
+        .shift(
+            days=shift_day,
+            hours=shift_hour,
+            minutes=shift_minute,
+            seconds=shift_second,
+        )
+    )
 
     # fetch the timeline at the specified date
-    timeline = calendar.timeline.at(begin_date).shift(
-        days=shift_day,
-        hours=shift_hour,
-        minutes=shift_minute,
-        seconds=shift_second,
-    )
+    timeline = calendar.timeline.at(begin_date)
 
     on_call_list = []
     for event in timeline:
