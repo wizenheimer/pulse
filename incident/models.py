@@ -1,6 +1,7 @@
 from audioop import reverse
 import arrow
 from django.db import models
+from sqlalchemy import null
 from users.models import Team, User
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -108,6 +109,13 @@ class EscalationAction(models.Model):
     )
     entity_type = models.CharField(
         max_length=255, choices=ENTITY_TYPES, default="Attribute"
+    )
+    level = models.ForeignKey(
+        EscalationLevel,
+        related_name="actions",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     context = models.TextField()
     entity = models.TextField()
