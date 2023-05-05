@@ -1,3 +1,8 @@
+# Version : 2.0
+# Changelog :
+# =================================================================
+# Replaced Recipients with Entity
+# Added Type to assist in Parsing Entitites
 policy:
   name: My Escalation Policy
   # A custom yaml policy for creating escalation policies
@@ -16,16 +21,21 @@ policy:
         - name: Send email
           system: Email
           context: Incident {incident.id} requires attention
-          recipient: support@example.com
+          entity: support@example.com
           # can be `entire_team`
+          type: email
+          # in case of 'entire_team' type should be attribute
         - name: Send SMS
           system: SMS
-          recipient: +1234567890
+          entity: +1234567890
           context: Incident {incident.id} requires attention
+          type: phone
         - name: Create ticket
           system: Slack
-          receipient: Development
+          entity: Development
           # name of the channel, incase not present would post message to general incident channel
+          type: channel
+          # in case of person, could be user_id
           context: Incident {incident.id} requires attention
 
     - name: Level 2
@@ -37,20 +47,26 @@ policy:
           summary: Incident {{incident.id}} requires attention
           # creates an issue using a middleware, webhook->middleware->JIRA Ticket
           context: Please investigate the incident and provide an update
+          type: None
+          # entity and type would be ignored
         - name: Send email
           system: Email
-          recipient: manager@example.com
+          entity: manager@example.com, manager2@example.com,  manager3@example.com
+          type: None
+          # email address comma separated
         - name: Send email
           system: Notify
-          recipient: 1
+          entity: 1
           # notify the member using the member id, notify touches every possible touchpoint
           # alternative is 'entire_team'
         - name: Send SMS
           system: Webhook
-          recipient: https://example.com/webhook
+          entity: https://example.com/webhook
           # webhook to trigger during an incident
           context: Please investigate the incident and provide an update
           # context can be empty
+          type: url
+          # parse the entity as a url
         - name: Create ticket
           system: JIRA
           summary: Incident {{incident.id}} still requires attention
@@ -60,10 +76,10 @@ policy:
       actions:
         - name: Send email
           # when system is not specified it throws a validation error
-          recipient: director@example.com
+          entity: director@example.com
         - name: Send SMS
           # when system is not specified it throws a validation error
-          recipient: +1234567890
+          entity: +1234567890
         - name: Create ticket
           system: JIRA
           summary: Incident {{incident.id}} has not been resolved
