@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from users.models import User, Guest, Team
-from incident.models import EscalationPolicy
+from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
 
 
@@ -22,6 +22,10 @@ class Service(models.Model):
     escalation_policy = models.ForeignKey(
         EscalationPolicy, null=True, blank=True, on_delete=models.DO_NOTHING
     )
+    # attach on call calendar to a service
+    calendar = models.ForeignKey(
+        OnCallCalendar, null=True, blank=True, on_delete=models.DO_NOTHING
+    )
     # active subscriptions
     subscribers = models.ManyToManyField(
         User, through="SubscriberAssignment", related_name="services"
@@ -29,7 +33,11 @@ class Service(models.Model):
     guests = models.ManyToManyField(
         Guest, through="GuestAssignment", related_name="services"
     )
-    # TODO: team relationship
+
+    # team relations
+    team = models.ForeignKey(
+        Team, related_name="services", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     def __str__(self) -> str:
         return self.name
