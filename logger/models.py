@@ -4,6 +4,9 @@ from users.models import User, Guest, Team
 from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
 
+# TODO: figure out a way to share Endpoints across clients
+# TODO: try to share the results instead
+
 
 class Service(models.Model):
     """
@@ -49,6 +52,7 @@ class RequestHandler(models.Model):
     """
 
     METHOD_CHOICES = [
+        ("HEAD", "HEAD"),
         ("GET", "GET"),
         ("POST", "POST"),
         ("PUT", "PUT"),
@@ -86,6 +90,8 @@ class Endpoint(models.Model):
     Monitoring Model
     """
 
+    # Users are like toddlers - they'll push buttons and see what happens.
+    # Sanitize the user input.
     LOGGER_TYPE = [
         ("status", "Status Monitor"),
         ("keyword", "Keyword Monitor"),
@@ -97,6 +103,61 @@ class Endpoint(models.Model):
         ("imap", "IMAP Monitor"),
     ]
 
+    TIMEOUT_CHOICES = [
+        (60, "60 seconds"),
+        (45, "45 seconds"),
+        (30, "30 seconds"),
+        (15, "15 seconds"),
+        (10, "10 seconds"),
+        (5, "5 seconds"),
+        (3, "3 seconds"),
+        (2, "2 seconds"),
+    ]
+
+    EXPIRATION_CHOICES = [
+        (1, "1 Day before expiration"),
+        (2, "2 Day before expiration"),
+        (3, "3 Day before expiration"),
+        (7, "7 Day before expiration"),
+        (14, "14 Day before expiration"),
+        (30, "30 Day before expiration"),
+        (60, "60 Day before expiration"),
+    ]
+
+    FREQUENCY_CHOICES = [
+        (30, "30 seconds"),
+        (45, "45 seconds"),
+        (60, "1 minute"),
+        (120, "2 minutes"),
+        (180, "3 minutes"),
+        (300, "5 minutes"),
+        (600, "10 minutes"),
+        (750, "15 minutes"),
+        (900, "30 minutes"),
+    ]
+
+    CONFIRMATION_CHOICES = [
+        (0, "confirm immediately"),
+        (5, "confirm after 5 seconds"),
+        (10, "confirm after 10 seconds"),
+        (15, "confirm after 15 seconds"),
+        (30, "confirm after 30 seconds"),
+        (60, "confirm after 60 seconds"),
+        (120, "confirm after 120 seconds"),
+        (180, "confirm after 180 seconds"),
+        (300, "confirm after 300 seconds"),
+    ]
+
+    RECOVERY_CHOICES = [
+        (0, "recover immediately"),
+        (60, "recover after 1 minute"),
+        (180, "recover after 3 minutes"),
+        (300, "recover after 5 minutes"),
+        (900, "recover after 15 minutes"),
+        (1800, "recover after 30 minutes"),
+        (3600, "recover after 1 hour"),
+        (7200, "recover after 2 hours"),
+    ]
     # type of monitoring
     logger_type = models.CharField(max_length=255, choices=LOGGER_TYPE)
     url = models.URLField()
@@ -115,22 +176,30 @@ class Endpoint(models.Model):
     push_notif = models.BooleanField(default=False)
 
     # meta-data in seconds
-    check_frequency = models.PositiveIntegerField()
+    check_frequency = models.PositiveIntegerField(
+        default=180,
+        choices=FREQUENCY_CHOICES,
+    )
 
     # holds the request body
     request_handler = models.ForeignKey(
         RequestHandler, on_delete=models.DO_NOTHING, null=True, blank=True
     )
-
     # check frequency must never be set to a shorter amount of time than the Request timeout period
-    timeout = models.PositiveIntegerField()
+    timeout = models.PositiveIntegerField(default=30, choices=TIMEOUT_CHOICES)
 
     # logging configuration
     # how long we wait after observing a failure before we start a new incident.
-    confirmation_period = models.PositiveIntegerField(default=5)
+    confirmation_period = models.PositiveIntegerField(
+        default=0,
+        choices=CONFIRMATION_CHOICES,
+    )
 
     # how long a monitor has to be up before we automatically mark it as recovered, and the related incident as resolved.
-    recovery_period = models.PositiveIntegerField(default=5)
+    recovery_period = models.PositiveIntegerField(
+        default=180,
+        choices=RECOVERY_CHOICES,
+    )
 
     # escalation period
     # How long to wait before escalating the incident alert to the team. Leave blank to disable escalating to the entire team.
@@ -142,27 +211,11 @@ class Endpoint(models.Model):
     # How many days before the ssl expires/domain expires do you want to be alerted? Valid values are 1, 2, 3, 7, 14, 30, and 60.
     domain_expiration = models.PositiveIntegerField(
         default=1,
-        choices=[
-            (1, 1),
-            (2, 2),
-            (3, 3),
-            (7, 7),
-            (14, 14),
-            (30, 30),
-            (60, 60),
-        ],
+        choices=EXPIRATION_CHOICES,
     )
     ssl_expiration = models.PositiveIntegerField(
         default=1,
-        choices=[
-            (1, 1),
-            (2, 2),
-            (3, 3),
-            (7, 7),
-            (14, 14),
-            (30, 30),
-            (60, 60),
-        ],
+        choices=EXPIRATION_CHOICES,
     )
 
     # Should we automatically follow redirects when sending the HTTP request?
