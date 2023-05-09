@@ -10,6 +10,7 @@ from .models import (
 )
 
 # TODO: Build Validators for choice fields
+# TODO: Build Transform functions for all caps and trim spaces for types
 
 
 def build_policy_model(escalation_policy):

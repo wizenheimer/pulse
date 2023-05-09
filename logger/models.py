@@ -1,9 +1,12 @@
+from uuid import uuid4
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from users.models import User, Guest, Team
 from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
+
+# from util.logger_util import generate_token
 
 # TODO: figure out a way to share Endpoints across clients
 # TODO: try to share the results instead
@@ -288,7 +291,7 @@ class CronHandler(models.Model):
     # type of monitoring
     logger_type = models.CharField(max_length=255, choices=LOGGER_TYPE)
     # url for the webhook
-    # TODO: webhook creation endpoint, implements a rotated token to identify the cron
+    token = models.CharField(max_length=24, null=True, blank=True, db_index=True)
     url = models.URLField()
     name = models.CharField(max_length=255, default="Logger")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -334,6 +337,13 @@ class CronHandler(models.Model):
 
     # collections relations
     service = models.ManyToManyField(Service, related_name="crons")
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            # This code only happens if the objects is not in the database yet.
+            # Otherwise it would have pk
+            self.token = str(uuid4())
+        super(CronHandler, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.id)

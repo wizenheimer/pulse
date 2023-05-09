@@ -3,6 +3,8 @@ import socket
 import requests
 import ssl
 import re
+from random import choice
+from string import ascii_uppercase
 
 # TODO: hostname in serializer and auth credentials as nested serializers
 
@@ -307,3 +309,11 @@ def get_status(
             return "OK"
         else:
             return "DOWN"
+
+
+def generate_token(token_size=24):
+    """
+    Generate an alphanumeric token for a given token size
+    """
+    token = "".join(choice(ascii_uppercase) for i in range(token_size))
+    return token
