@@ -28,7 +28,7 @@ policy:
       # denotes policy repeatition
       urgency: 5
       # modify the urgency level of the incident
-      day: 1,2,3,4,5,6,7
+      day: 1234567
       # denotes the day of the week for the level to be triggered, defaults to all using 0
       start_time: 1000
       # defaults to 24x7

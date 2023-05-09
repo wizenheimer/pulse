@@ -1,4 +1,5 @@
 import io
+import datetime
 import yaml
 import requests
 from .models import (
@@ -41,15 +42,33 @@ def build_level_model(escalation_level):
     delay = escalation_level.get("delay", 0)
     repeat = escalation_level.get("repeat", 0)
     urgency = escalation_level.get("urgency", 1)
-    day = escalation_level.get("day", "1234567")
-    start_time = escalation_level.get("start_time", None)
+    days = escalation_level.get("days", "1234567")
+    timezone = escalation_level.get("timezone", "UTC")
+
+    level = EscalationLevel.objects.create(
+        name=name,
+        delay_for=delay,
+        repeat=repeat,
+        days=days,
+        urgency=urgency,
+        end_time=end_time,
+        timezone=timezone,
+    )
+
+    start_time = datetime.strptime(start_time, "%d:%m:%y %H:%M:%S")
+    if start_time is not None:
+        start_time = escalation_level.get("start_time", None)
+        level.start_time = start_time
+
     end_time = escalation_level.get("end_time", None)
-    timezone = escalation_level.get("timezone", None)
+    if end_time is not None:
+        end_time = datetime.strptime(end_time, "%d:%m:%y %H:%M:%S")
+        level.end_time = end_time
 
-    level_id = EscalationLevel.objects.create(name=name, delay_for=delay, repeat=repeat)
+    level.save()
 
-    # return EscalationLevel.objects.get(id=level_id)
-    return level_id
+    # return EscalationLevel.objects.get(id=level)
+    return level
 
 
 def build_action_model(action):
@@ -62,7 +81,7 @@ def build_action_model(action):
     entity_type = action.get("type", "Attribute")
     context = action.get("context", "")
 
-    action_id = EscalationAction.objects.create(
+    action = EscalationAction.objects.create(
         name=name,
         system=system,
         entity=entity,
@@ -70,8 +89,8 @@ def build_action_model(action):
         entity_type=entity_type,
     )
 
-    # return EscalationAction.get(id=action_id)
-    return action_id
+    # return EscalationAction.get(id=action)
+    return action
 
 
 def build_model(url=None):
