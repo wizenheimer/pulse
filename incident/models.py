@@ -1,6 +1,8 @@
 from audioop import reverse
 import arrow
+import pytz
 from django.db import models
+from django.core.exceptions import ValidationError
 from sqlalchemy import null
 from users.models import Team, User
 from django.core.exceptions import ObjectDoesNotExist
@@ -9,6 +11,13 @@ from django.core.exceptions import ObjectDoesNotExist
 # TODO: Figure out how to optimally store graphs and nodes
 # TODO: Calendar URL Validator
 # TODO: Refer Previously generated Actions, Levels as Templates
+
+
+def validate_timezone(value):
+    try:
+        pytz.timezone(value)
+    except pytz.exceptions.UnknownTimeZoneError:
+        raise ValidationError("Invalid timezone.")
 
 
 class OnCallCalendar(models.Model):
@@ -48,6 +57,9 @@ class EscalationPolicy(models.Model):
     name = models.CharField(max_length=255, default="MyPolicy")
     # denotes delay in seconds between every level of the policy
     delay = models.PositiveIntegerField(default=10)
+    repeat = models.PositiveIntegerField(default=0)
+    urgency = models.PositiveIntegerField(default=1)
+    impact = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -58,11 +70,27 @@ class EscalationPolicy(models.Model):
 class EscalationLevel(models.Model):
     # human readable name of the level
     name = models.CharField(max_length=255, default="MyLevel")
-    repeat_for = models.PositiveIntegerField(
+    repeat = models.PositiveIntegerField(
         help_text="How many times to repeat the level", default=0
     )
-    delay_for = models.PositiveIntegerField(
+    delay = models.PositiveIntegerField(
         help_text="Denotes the delay in seconds between successive actions", default=0
+    )
+    urgency = models.PositiveIntegerField(
+        help_text="Denotes the urgency of the incident", default=1
+    )
+    days = models.CharField(
+        help_text="Denotes the days for which incident would be triggered", default=1
+    )
+    start_time = models.DateTimeField(null=True, blank=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    timezone = models.CharField(
+        null=True,
+        blank=True,
+        default="UTC",
+        validators=[
+            validate_timezone,
+        ],
     )
     policy = models.ManyToManyField(
         EscalationPolicy,

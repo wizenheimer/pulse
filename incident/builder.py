@@ -16,10 +16,19 @@ def build_policy_model(escalation_policy):
     Creates and returns a new Escalation Policy Model
     """
     name = escalation_policy["policy"].get("name", "Untitled")
-    delay = escalation_policy["policy"].get("delay", 0)
+    delay = escalation_policy["policy"].get("delay", 10)
+    repeat = escalation_policy["repeat"].get("repeat", 0)
+    urgency = escalation_policy["urgency"].get("urgency", 1)
+    impact = escalation_policy["impact"].get("impact", 1)
 
     # policy_id = EscalationPolicy.objects.create(name=name, delay=delay)
-    return EscalationPolicy.objects.create(name=name, delay=delay)
+    return EscalationPolicy.objects.create(
+        name=name,
+        delay=delay,
+        repeat=repeat,
+        urgency=urgency,
+        impact=impact,
+    )
 
     # return EscalationPolicy.objects.get(id=policy_id)
 
@@ -31,10 +40,13 @@ def build_level_model(escalation_level):
     name = escalation_level.get("name", "Unknown")
     delay = escalation_level.get("delay", 0)
     repeat = escalation_level.get("repeat", 0)
+    urgency = escalation_level.get("urgency", 1)
+    day = escalation_level.get("day", "1234567")
+    start_time = escalation_level.get("start_time", None)
+    end_time = escalation_level.get("end_time", None)
+    timezone = escalation_level.get("timezone", None)
 
-    level_id = EscalationLevel.objects.create(
-        name=name, delay_for=delay, repeat_for=repeat
-    )
+    level_id = EscalationLevel.objects.create(name=name, delay_for=delay, repeat=repeat)
 
     # return EscalationLevel.objects.get(id=level_id)
     return level_id
