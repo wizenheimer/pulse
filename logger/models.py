@@ -1,11 +1,28 @@
+from distutils.command.clean import clean
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from users.models import User, Guest, Team
 from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
 
 # TODO: figure out a way to share Endpoints across clients
 # TODO: try to share the results instead
+# TODO: pause incidenet generation during maintance window
+
+
+class MaintainancePolicy(models.Model):
+    name = models.TextField(max_length=255)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+    def clean(self) -> None:
+        "Validate end_time and start_time"
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+        if end_date < start_date:
+            raise ValidationError("End date should be greater than start date.")
 
 
 class Service(models.Model):
@@ -20,6 +37,15 @@ class Service(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_public = models.BooleanField(default=False)
+
+    # maintainance policy
+    maintainance_policy = models.ForeignKey(
+        MaintainancePolicy,
+        related_name="services",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     # attach escalation policy to a service
     escalation_policy = models.ForeignKey(
@@ -62,8 +88,9 @@ class RequestHandler(models.Model):
     # HTTP Method used to make a request. Valid options: GET, HEAD, POST, PUT, PATCH
     method = models.CharField(max_length=5, choices=METHOD_CHOICES)
 
-    headers = models.JSONField(null=True, blank=True)
-    body = models.JSONField(default=list)
+    header_name = models.CharField(max_length=255, null=True, blank=True)
+    header_value = models.CharField(max_length=255, null=True, blank=True)
+    body = models.TextField(null=True, blank=True)
 
     # Basic HTTP authentication username to include with the request.
     auth_username = models.CharField(max_length=255, null=True, blank=True)
