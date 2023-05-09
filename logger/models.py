@@ -1,4 +1,3 @@
-from distutils.command.clean import clean
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
@@ -8,10 +7,14 @@ from .managers import RequestsManager, CronManager
 
 # TODO: figure out a way to share Endpoints across clients
 # TODO: try to share the results instead
-# TODO: pause incidenet generation during maintance window
+# TODO: pause incident generation during maintance window
 
 
 class MaintainancePolicy(models.Model):
+    """
+    Building a maintainance window for the given service.
+    """
+
     name = models.TextField(max_length=255)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -197,10 +200,11 @@ class Endpoint(models.Model):
     port = models.CharField(max_length=255, null=True, blank=True)
 
     # notification perferences
-    push_email = models.BooleanField(default=True)
-    push_sms = models.BooleanField(default=False)
-    push_call = models.BooleanField(default=False)
-    push_notif = models.BooleanField(default=False)
+    # NOT LONGER Needed, On-Call person would be notified based on their preference
+    # push_email = models.BooleanField(default=True)
+    # push_sms = models.BooleanField(default=False)
+    # push_call = models.BooleanField(default=False)
+    # push_notif = models.BooleanField(default=False)
 
     # meta-data in seconds
     check_frequency = models.PositiveIntegerField(

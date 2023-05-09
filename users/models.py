@@ -3,10 +3,15 @@ from django.contrib.auth.models import AbstractUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from random import choice
 from string import ascii_uppercase
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .managers import UserManager
 
 # from monitor.models import Monitor
+# TODO: set up option for primary email and secondary email
+# TODO: set up option for primary contact and secondary contact
+# TODO: set up twilio integrations for sending whatsapp & phone alerts
+# TODO: set up otp verification and generation
 
 
 class Team(models.Model):
@@ -35,7 +40,8 @@ class Team(models.Model):
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True, db_index=True)
-    # has verified email address
+    phone = PhoneNumberField(unique=True, null=True, blank=True)
+    # has verified email address and phone number
     is_verified = models.BooleanField(default=False)
     # has an active account
     is_active = models.BooleanField(default=False)

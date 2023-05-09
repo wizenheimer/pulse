@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # packages
     "rest_framework",
     "rest_framework_simplejwt",
+    "phonenumber_field",
     # local apps
     "users",
     # "monitor", deprecated
