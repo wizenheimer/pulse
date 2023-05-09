@@ -76,16 +76,16 @@ def build_action_model(action):
     Build the action model
     """
     name = action.get("name", "Action")
-    system = action.get("system", "LOG")
+    intent = action.get("intent", "Alert")
+    context = action.get("context", "")
     entity = action.get("entity", "None")
     entity_type = action.get("type", "Attribute")
-    context = action.get("context", "")
 
     action = EscalationAction.objects.create(
         name=name,
-        system=system,
-        entity=entity,
+        intent=intent,
         context=context,
+        entity=entity,
         entity_type=entity_type,
     )
 

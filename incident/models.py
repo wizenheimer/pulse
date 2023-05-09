@@ -80,7 +80,9 @@ class EscalationLevel(models.Model):
         help_text="Denotes the urgency of the incident", default=1
     )
     days = models.CharField(
-        help_text="Denotes the days for which incident would be triggered", default=1
+        help_text="Denotes the days for which incident would be triggered",
+        default="1234567",
+        max_length=7,
     )
     start_time = models.DateTimeField(null=True, blank=True)
     end_time = models.DateTimeField(null=True, blank=True)
@@ -91,6 +93,7 @@ class EscalationLevel(models.Model):
         validators=[
             validate_timezone,
         ],
+        max_length=255,
     )
     policy = models.ManyToManyField(
         EscalationPolicy,
@@ -106,38 +109,45 @@ class EscalationLevel(models.Model):
 
 
 class EscalationAction(models.Model):
-    ACTION_CHOICES = (
-        ("EMAIL", "Send Email"),
-        ("MESSAGE", "Send Message"),
-        ("CALL", "Send a Call"),
-        ("HOOK", "Trigger a Webhook"),
-        ("JIRA", "Create an issue in JIRA"),
-        ("SLACK", "Post a message to Slack"),
-        ("LOG", "Create a log message"),
+    INTENT_CHOICES = (
+        ("Alert", "Alert"),
+        ("Resolve", "Resolve"),
     )
     ENTITY_TYPES = (
-        ("ATTRIBUTE", "Parse as Attribute"),
-        ("ID", "Parse as id"),
-        ("CS:ID", "Parse as comma-separated id"),
-        ("EMAIL", "Parse as email address"),
-        ("CS:EMAIL", "Parse as comma-separated email address"),
-        ("SMS", "Parse as SMS"),
-        ("CS:SMS", "Parse as comma-separated SMS"),
-        ("PHONE", "Parse as phone number"),
-        ("CS:PHONE", "Parse as comma-separated phone number"),
-        ("CHANNEL", "Parse as slack channel"),
-        ("CS:CHANNEL", "Parse as comma-separated slack channel"),
-        ("JIRA", "Parse as JIRA Ticket"),
-        ("HOOK", "Parse as Webhook"),
-        ("EX:HOOK", "Parse as External Webhook"),
+        ("Email", "Email"),
+        ("EmailList", "EmailList"),
+        ("Phone", "Phone"),
+        ("PhoneList", "PhoneList"),
+        ("Webhook", "Webhook"),
+        ("WebhookList", "WebhookList"),
+        ("ID", "ID"),
+        ("IDList", "IDList"),
+        ("Group", "Group"),
+        ("GroupList", "GroupList"),
+        # ("ATTRIBUTE", "Parse as Attribute"),
+        # ("ID", "Parse as id"),
+        # ("CS:ID", "Parse as comma-separated id"),
+        # ("EMAIL", "Parse as email address"),
+        # ("CS:EMAIL", "Parse as comma-separated email address"),
+        # ("SMS", "Parse as SMS"),
+        # ("CS:SMS", "Parse as comma-separated SMS"),
+        # ("PHONE", "Parse as phone number"),
+        # ("CS:PHONE", "Parse as comma-separated phone number"),
+        # ("CHANNEL", "Parse as slack channel"),
+        # ("CS:CHANNEL", "Parse as comma-separated slack channel"),
+        # ("JIRA", "Parse as JIRA Ticket"),
+        # ("HOOK", "Parse as Webhook"),
+        # ("EX:HOOK", "Parse as External Webhook"),
     )
     name = models.CharField(max_length=255, default="MyAction")
-    system = models.CharField(
-        max_length=255, choices=ACTION_CHOICES, blank=True, null=True, default="LOG"
+    intent = models.CharField(
+        max_length=255, choices=INTENT_CHOICES, blank=True, null=True, default="Alert"
     )
     entity_type = models.CharField(
         max_length=255, choices=ENTITY_TYPES, default="Attribute"
     )
+    context = models.TextField()
+    entity = models.TextField()
     level = models.ForeignKey(
         EscalationLevel,
         related_name="actions",
@@ -145,8 +155,6 @@ class EscalationAction(models.Model):
         null=True,
         blank=True,
     )
-    context = models.TextField()
-    entity = models.TextField()
 
     def __str__(self):
         return self.name
