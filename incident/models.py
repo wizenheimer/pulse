@@ -1,11 +1,8 @@
-from audioop import reverse
-import arrow
 import pytz
 from django.db import models
 from django.core.exceptions import ValidationError
-from sqlalchemy import null
-from users.models import Team, User
-from django.core.exceptions import ObjectDoesNotExist
+
+# from logger.models import Service
 
 
 # TODO: Figure out how to optimally store graphs and nodes
@@ -28,29 +25,6 @@ class OnCallCalendar(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class Incident(models.Model):
-    title = models.CharField(max_length=255, default="untitled")
-    description = models.TextField()
-    priority = models.CharField(
-        max_length=20,
-        choices=[("P1", "P1"), ("P2", "P2"), ("P3", "P3"), ("P4", "P4")],
-        default="",
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("Open", "Open"),
-            ("Acknowledged", "Acknowledged"),
-            ("Resolved", "Resolved"),
-        ],
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.status
 
 
 class EscalationPolicy(models.Model):

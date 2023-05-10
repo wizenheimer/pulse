@@ -8,6 +8,8 @@ from users.models import User, Guest, Team
 from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
 
+# from incident.models import Incident
+
 # from util.logger_util import generate_token
 # TODO: figure out M2M fields between Service and Endpoint
 # TODO: figure out a way to share Endpoints across clients
@@ -87,6 +89,36 @@ class Service(models.Model):
 
     def __str__(self) -> str:
         return str(self.id)
+
+
+class Incident(models.Model):
+    title = models.CharField(max_length=255, default="untitled")
+    description = models.TextField()
+    priority = models.CharField(
+        max_length=20,
+        choices=[("P1", "P1"), ("P2", "P2"), ("P3", "P3"), ("P4", "P4")],
+        default="",
+    )
+    service = models.ForeignKey(
+        Service,
+        blank=True,
+        null=True,
+        related_name="incidents",
+        on_delete=models.CASCADE,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("Open", "Open"),
+            ("Acknowledged", "Acknowledged"),
+            ("Resolved", "Resolved"),
+        ],
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.status
 
 
 class RequestHandler(models.Model):
@@ -389,6 +421,13 @@ class Log(models.Model):
     )
     message = models.TextField(null=True, blank=True)
     response_body = models.TextField(null=True, blank=True)
+    incident = models.ForeignKey(
+        Incident,
+        blank=True,
+        null=True,
+        related_name="log",
+        on_delete=models.CASCADE,
+    )
 
     # determine the affected entity - endpoint or cron
     """
