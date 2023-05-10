@@ -2,6 +2,8 @@ from uuid import uuid4
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from users.models import User, Guest, Team
 from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
@@ -33,16 +35,25 @@ class MaintainancePolicy(models.Model):
 
 class Service(models.Model):
     """
-    Model for collecting inter-related Endpoints and Crons as Service Collection
+    Model for collecting Endpoints and Crons as Service Collection
     Each Collection has its own collection policy
     Since endpoints and crons are shared across collections, there could be multiple policies triggered concurrently for different teams
+    Services could be decoupled or coupled
+    Coupled services refer to tightly interconnected services that have strong dependencies on each other, while decoupled services are loosely connected and operate independently with minimal dependencies.
     """
 
+    TYPE = (
+        ("coupled", "coupled"),
+        # this marks entire service as down if one of the components is down
+        ("decoupled", "decoupled"),
+        # this marks component as down without affecting entire service
+    )
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_public = models.BooleanField(default=False)
+    service_type = models.CharField(choices=TYPE, default="decoupled", max_length=10)
 
     # maintainance policy
     maintainance_policy = models.ForeignKey(
@@ -256,6 +267,7 @@ class Endpoint(models.Model):
         choices=EXPIRATION_CHOICES,
     )
 
+    # TODO:eliminated this to an extent, figure out a phase out
     # Should we automatically follow redirects when sending the HTTP request?
     follow_requests = models.BooleanField(default=True)
 
@@ -264,13 +276,6 @@ class Endpoint(models.Model):
     is_eu = models.BooleanField(default=False)
     is_au = models.BooleanField(default=False)
     is_sn = models.BooleanField(default=False)
-
-    # has public access
-    # is_public = models.BooleanField(default=False)
-    # is active
-    # is_active = models.BooleanField(default=True)
-
-    # objects = EndpointManager()
 
     # collections relations
     service = models.ManyToManyField(Service, related_name="endpoints")
@@ -365,4 +370,60 @@ class GuestAssignment(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.id} subd {self.service}"
+        return f"{self.guest.id} subd {self.service}"
+
+
+class Log(models.Model):
+    """
+    Log the results
+    """
+
+    STATUS_CHOICES = (
+        ("UP", "marks status as UP"),
+        ("DOWN", "marks status as DOWN"),
+    )
+
+    status = models.CharField(max_length=4, choices=STATUS_CHOICES, default="UP")
+    response_time = models.DecimalField(
+        null=True, blank=True, decimal_places=4, max_digits=8
+    )
+    message = models.TextField(null=True, blank=True)
+    response_body = models.TextField(null=True, blank=True)
+
+    # determine the affected entity - endpoint or cron
+    """
+    Querying 101
+    from django.contrib.contenttypes.models import ContentType
+
+    # Get the ContentType of the Endpoint model
+    endpoint_content_type = ContentType.objects.get_for_model(Endpoint)
+
+    # Query logs related to Endpoint model
+    endpoint_logs = Log.objects.filter(content_type=endpoint_content_type)
+
+    # Get the ContentType of the Cron model
+    cron_content_type = ContentType.objects.get_for_model(Cron)
+
+    # Query logs related to Cron model
+    cron_logs = Log.objects.filter(content_type=cron_content_type)
+
+    # Create a new Log instance with a generic foreign key
+    endpoint = Endpoint.objects.get(pk=1)  # Assuming you have an existing Endpoint instance
+    log = Log.objects.create(
+        response_time=0.5,
+        status="UP",
+        message="Log message",
+        response_body="Response body",
+        target_content_type=ContentType.objects.get_for_model(Endpoint),
+        target_object_id=endpoint.pk
+    )
+    """
+    entity_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    entity_id = models.PositiveIntegerField()
+    target = GenericForeignKey("entity_type", "entity_id")
+
+    # TODO: Implement screenshot support
+    # screenshot = models.ImageField()
+
+    def __str__(self):
+        return self.status
