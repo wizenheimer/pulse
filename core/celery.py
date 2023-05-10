@@ -7,6 +7,7 @@ from celery import Celery
 # "sample_app" is name of the root app
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
+# TODO: switch to environment variables
 app = Celery(
     "celery_app", broker="redis://127.0.0.1:6379", backend="redis://127.0.0.1:6379"
 )
