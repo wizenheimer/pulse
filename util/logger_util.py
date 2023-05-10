@@ -174,7 +174,7 @@ def get_ssl_handshake_time(
         return None
 
 
-def get_response_time(
+def get_response_time_raw(
     hostname=None,
     ip=None,
     protocol="HTTPS",
@@ -317,3 +317,78 @@ def generate_token(token_size=24):
     """
     token = "".join(choice(ascii_uppercase) for i in range(token_size))
     return token
+
+
+def process_endpoint(endpoint):
+    """
+    Get response time
+    Get "OK or Down or Unknown" status
+    """
+    response_time = -1
+    match = False
+    message = ""
+    context = {}
+    response = None
+    try:
+        headers = (
+            {endpoint.request_handler.header_name: endpoint.request_handler.header_value}
+            if endpoint.request_handler.header_name and endpoint.request_handler.header_value
+            else {}
+        )
+        body = endpoint.request_handler.body if endpoint.request_handler.body else {}
+        auth = (
+            (endpoint.request_handler.auth_username, endpoint.request_handler.auth_password)
+            if endpoint.request_handler.auth_username and endpoint.request_handler.auth_password
+            else None
+        )
+
+        response = requests.request(
+            method=endpoint.request_handler.method,
+            url=endpoint.url,
+            headers=headers,
+            data=body,
+            auth=auth,
+            timeout=endpoint.timeout,
+            verify=endpoint.request_handler.verify_ssl,
+        )
+
+        response_time = response.elapsed.total_seconds()
+
+        regex = endpoint.regex
+
+        match = (
+            re.search(regex, str(response.status_code))
+            if endpoint.logger_type == "status"
+            else re.search(regex, str(response.content))
+        )
+
+        message = "Request sent successfully."
+
+    except requests.exceptions.Timeout:
+        # Maybe set up for a retry, or continue in a retry loop
+        message = "Request timed out. Try exceeding the timeout limit."
+    except requests.exceptions.TooManyRedirects:
+        # Tell the user their URL was bad and try a different one
+        message = "Request exceeds the configured number of maximum redirections. Try a different URL."
+    except requests.exceptions.ConnectionError:
+        # Network problem (DNS failure, refused connection, etc)
+        message = "Request couldn't be fulfilled. URL connection refused."
+    except requests.exceptions.HTTPError:
+        # Invalid HTTP response or regular unsuccesful
+        message = "HTTP response is invalid. Please try with a different URL."
+    except requests.exceptions.RequestException as e:
+        # catastrophic error. bail.
+        message = "Request couldn't be fulfilled. URL connection refused."
+    finally:
+        # prepare a context object
+        context = {
+            "response_time": response_time,
+            "status": "OK" if match else "Down",
+            "message": message,
+        }
+
+        if not match:
+            context["response"] = response
+            # TODO: prepare a screenshot queue
+    
+    return context

@@ -92,7 +92,7 @@ class RequestHandler(models.Model):
     ]
 
     # HTTP Method used to make a request. Valid options: GET, HEAD, POST, PUT, PATCH
-    method = models.CharField(max_length=5, choices=METHOD_CHOICES)
+    method = models.CharField(max_length=5, choices=METHOD_CHOICES, default="GET")
 
     header_name = models.CharField(max_length=255, null=True, blank=True)
     header_value = models.CharField(max_length=255, null=True, blank=True)
@@ -110,6 +110,8 @@ class RequestHandler(models.Model):
     log_response = models.BooleanField(default=False)
     # Do you want to log the screenshot in case of failure
     log_screen = models.BooleanField(default=False)
+    # Should we verify SSL certificate validity
+    verify_ssl = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     objects = RequestsManager()
@@ -192,7 +194,9 @@ class Endpoint(models.Model):
         (7200, "recover after 2 hours"),
     ]
     # type of monitoring
-    logger_type = models.CharField(max_length=255, choices=LOGGER_TYPE)
+    logger_type = models.CharField(
+        max_length=255, choices=LOGGER_TYPE, default="status"
+    )
     url = models.URLField()
     name = models.CharField(max_length=255, default="Logger")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -260,9 +264,6 @@ class Endpoint(models.Model):
     is_eu = models.BooleanField(default=False)
     is_au = models.BooleanField(default=False)
     is_sn = models.BooleanField(default=False)
-
-    # Should we verify SSL certificate validity
-    verify_ssl = models.BooleanField(default=False)
 
     # has public access
     # is_public = models.BooleanField(default=False)
@@ -365,12 +366,3 @@ class GuestAssignment(models.Model):
 
     def __str__(self):
         return f"{self.user.id} subd {self.service}"
-
-
-# class CronSubscriberAssignment(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.CASCADE)
-#     cron = models.ForeignKey(CronHandler, on_delete=models.CASCADE)
-#     start_date = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"{self.user.id} subd {self.cron}"
