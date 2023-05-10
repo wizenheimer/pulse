@@ -97,7 +97,7 @@ class Incident(models.Model):
     priority = models.CharField(
         max_length=20,
         choices=[("P1", "P1"), ("P2", "P2"), ("P3", "P3"), ("P4", "P4")],
-        default="",
+        default="P1",
     )
     service = models.ForeignKey(
         Service,
@@ -421,13 +421,14 @@ class Log(models.Model):
     )
     message = models.TextField(null=True, blank=True)
     response_body = models.TextField(null=True, blank=True)
-    incident = models.ForeignKey(
-        Incident,
-        blank=True,
-        null=True,
-        related_name="log",
-        on_delete=models.CASCADE,
-    )
+    # pointless, since we bound incident to service
+    # incident = models.ForeignKey(
+    #     Incident,
+    #     blank=True,
+    #     null=True,
+    #     related_name="log",
+    #     on_delete=models.CASCADE,
+    # )
 
     # determine the affected entity - endpoint or cron
     """

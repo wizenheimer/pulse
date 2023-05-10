@@ -3,6 +3,7 @@ import requests
 from core.celery import app
 from logger.models import Endpoint, Service, Log
 from django.contrib.contenttypes.models import ContentType
+from incident.tasks import create_incident, resolve_incident
 
 # disable SSL warnings: handshakes are computationally expensive, could drop that overhead
 requests.urllib3.disable_warnings()
@@ -106,12 +107,12 @@ def prepare_logs(frequency=180):
         for endpoint in service.endpoints.filter(check_frequency=frequency):
             # TODO: decouple request queue for longer timeouts etc.
             # TODO: figure out a fix, some queues could be overwhelmed by request volume
+            # TODO: automatically resolve incidents after a given recovery period
             result = process_endpoint(endpoint)
             status = result.get("status", "UP")
-            # TODO:
-            # if status is "DOWN":
-            #     create new incident
-            #     pass
+            if status == "DOWN":
+                # create new incident
+                create_incident.delay(service_id=service.id)
             log = Log(
                 response_time=result.get("response_time", 0),
                 status=status,
