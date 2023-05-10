@@ -9,7 +9,7 @@ from incident.models import EscalationPolicy, OnCallCalendar
 from .managers import RequestsManager, CronManager
 
 # from util.logger_util import generate_token
-
+# TODO: figure out M2M fields between Service and Endpoint
 # TODO: figure out a way to share Endpoints across clients
 # TODO: try to share the results instead
 # TODO: pause incident generation during maintance window
@@ -399,13 +399,13 @@ class Log(models.Model):
     endpoint_content_type = ContentType.objects.get_for_model(Endpoint)
 
     # Query logs related to Endpoint model
-    endpoint_logs = Log.objects.filter(content_type=endpoint_content_type)
+    endpoint_logs = Log.objects.filter(entity_type=endpoint_content_type)
 
     # Get the ContentType of the Cron model
     cron_content_type = ContentType.objects.get_for_model(Cron)
 
     # Query logs related to Cron model
-    cron_logs = Log.objects.filter(content_type=cron_content_type)
+    cron_logs = Log.objects.filter(entity_type=cron_content_type)
 
     # Create a new Log instance with a generic foreign key
     endpoint = Endpoint.objects.get(pk=1)  # Assuming you have an existing Endpoint instance

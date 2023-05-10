@@ -331,14 +331,21 @@ def process_endpoint(endpoint):
     response = None
     try:
         headers = (
-            {endpoint.request_handler.header_name: endpoint.request_handler.header_value}
-            if endpoint.request_handler.header_name and endpoint.request_handler.header_value
+            {
+                endpoint.request_handler.header_name: endpoint.request_handler.header_value
+            }
+            if endpoint.request_handler.header_name
+            and endpoint.request_handler.header_value
             else {}
         )
         body = endpoint.request_handler.body if endpoint.request_handler.body else {}
         auth = (
-            (endpoint.request_handler.auth_username, endpoint.request_handler.auth_password)
-            if endpoint.request_handler.auth_username and endpoint.request_handler.auth_password
+            (
+                endpoint.request_handler.auth_username,
+                endpoint.request_handler.auth_password,
+            )
+            if endpoint.request_handler.auth_username
+            and endpoint.request_handler.auth_password
             else None
         )
 
@@ -383,12 +390,12 @@ def process_endpoint(endpoint):
         # prepare a context object
         context = {
             "response_time": response_time,
-            "status": "OK" if match else "Down",
+            "status": "UP" if match else "DOWN",
             "message": message,
         }
 
         if not match:
-            context["response"] = response
+            context["response_body"] = response
             # TODO: prepare a screenshot queue
-    
+
     return context
