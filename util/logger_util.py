@@ -6,6 +6,12 @@ import re
 from random import choice
 from string import ascii_uppercase
 
+# remove warnings
+# requests.packages.urllib3.disable_warnings(
+#     requests.packages.urllib3.exceptions.InsecureRequestWarning
+# )
+requests.urllib3.disable_warnings()
+
 # TODO: hostname in serializer and auth credentials as nested serializers
 
 
