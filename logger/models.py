@@ -210,8 +210,8 @@ class Endpoint(models.Model):
         (180, "3 minutes"),
         (300, "5 minutes"),
         (600, "10 minutes"),
-        (750, "15 minutes"),
-        (900, "30 minutes"),
+        (900, "15 minutes"),
+        (1800, "30 minutes"),
     ]
 
     CONFIRMATION_CHOICES = [

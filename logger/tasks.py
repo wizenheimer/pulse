@@ -4,6 +4,9 @@ from core.celery import app
 from logger.models import Endpoint, Service, Log
 from django.contrib.contenttypes.models import ContentType
 
+# disable SSL warnings: handshakes are computationally expensive, could drop that overhead
+requests.urllib3.disable_warnings()
+
 
 @app.task
 def process_endpoint(endpoint):
@@ -94,12 +97,15 @@ def prepare_logs(frequency=180):
     Optimized : Prepares all the endpoints which have the given frequency
     """
     # TODO: figure out a workaround for using signals, signals won't be triggered in case of bulk create operation
+    # TODO: try to reuse the services query set, maybe operating on stale state
     services = Service.objects.filter(is_active=True)
 
     # Instead of creating each Log instance individually in a loop, can use the bulk_create() method to create multiple instances in a single database query
     log_instances = []
     for service in services:
-        for endpoint in service.endpoints.filter(frequency=frequency):
+        for endpoint in service.endpoints.filter(check_frequency=frequency):
+            # TODO: decouple request queue for longer timeouts etc.
+            # TODO: figure out a fix, some queues could be overwhelmed by request volume
             result = process_endpoint(endpoint)
             status = result.get("status", "DOWN")
             # TODO:
