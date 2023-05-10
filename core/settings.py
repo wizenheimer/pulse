@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "phonenumber_field",
+    "django_celery_results",
     # local apps
     "users",
     # "monitor", deprecated

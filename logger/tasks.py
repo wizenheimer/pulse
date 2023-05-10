@@ -107,7 +107,7 @@ def prepare_logs(frequency=180):
             # TODO: decouple request queue for longer timeouts etc.
             # TODO: figure out a fix, some queues could be overwhelmed by request volume
             result = process_endpoint(endpoint)
-            status = result.get("status", "DOWN")
+            status = result.get("status", "UP")
             # TODO:
             # if status is "DOWN":
             #     create new incident
