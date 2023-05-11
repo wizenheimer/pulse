@@ -1,12 +1,11 @@
 from django.db.models import signals
 from django.dispatch import receiver
-from users.models import User
+from users.models import User, TeamAssignment
 from incident.models import OnCallCalendar
 from util.calendar_util import get_on_call
 from django.core.exceptions import ObjectDoesNotExist
 from .models import Incident, Service
 from .tasks import notify_on_call
-
 
 
 def notify_on_call(email):

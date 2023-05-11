@@ -7,7 +7,6 @@ from django.contrib.contenttypes.models import ContentType
 from twilio.rest import Client
 from django.conf import settings
 from logger.models import Endpoint, Service, Log, Incident
-from users.models import User
 from incident.tasks import create_incident
 from django.template.loader import render_to_string
 

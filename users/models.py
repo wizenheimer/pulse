@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from random import choice
 from string import ascii_uppercase
@@ -10,7 +11,6 @@ from .managers import UserManager
 # from monitor.models import Monitor
 # TODO: set up option for primary email and secondary email
 # TODO: set up option for primary contact and secondary contact
-# TODO: set up twilio integrations for sending whatsapp & phone alerts
 # TODO: set up otp verification and generation
 
 
@@ -87,13 +87,57 @@ class Guest(models.Model):
 class TeamAssignment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
+
     # roles
     is_manager = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     is_member = models.BooleanField(default=True)
     is_billing = models.BooleanField(default=False)
+
+    # notification preferences
+    notify_via_email_low_priority = models.BooleanField(default=True)
+    notify_via_email_high_priority = models.BooleanField(default=True)
+    notify_via_phone_low_priority = models.BooleanField(default=False)
+    notify_via_phone_high_priority = models.BooleanField(default=False)
+    notify_via_webhooks_low_priority = models.BooleanField(default=False)
+    notify_via_webhooks_high_priority = models.BooleanField(default=False)
+
+    #  status
+    STATUS_CHOICES = (
+        ("available", "available"),
+        ("away", "away"),
+    )
+    status = models.CharField(max_length=255, default="on standby⚡")
+    availability = models.CharField(
+        max_length=255, choices=STATUS_CHOICES, default="available"
+    )
+
+    # webhook urls
+    webhook_url = models.URLField(null=True, blank=True)
     # join date
     begin_date = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if (
+            self.notify_via_phone_low_priority or self.notify_via_phone_high_priority
+        ) and self.user.phone is None:
+            raise ValidationError(
+                "Phone number is required if phone notifications are enabled"
+            )
+        if (
+            self.notify_via_email_low_priority or self.notify_via_email_high_priority
+        ) and self.user.email is None:
+            raise ValidationError(
+                "Phone number is required if phone notifications are enabled"
+            )
+        if (
+            self.notify_via_webhooks_low_priority
+            or self.notify_via_webhooks_high_priority
+        ) and self.notify_via_webhooks is None:
+            raise ValidationError(
+                "Webhooks are required if webhook notifications are enabled"
+            )
+        super(TeamAssignment, self).save(*args, **kwargs)
 
     def __str__(self):
         return f"team:{str(self.team.id)} user:{str(self.user.id)}"
