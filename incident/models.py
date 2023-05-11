@@ -1,6 +1,5 @@
-import pytz
 from django.db import models
-from django.core.exceptions import ValidationError
+from .validators import validate_timezone, validate_icalendar_url
 
 # from logger.models import Service
 
@@ -10,18 +9,16 @@ from django.core.exceptions import ValidationError
 # TODO: Refer Previously generated Actions, Levels as Templates
 
 
-def validate_timezone(value):
-    try:
-        pytz.timezone(value)
-    except pytz.exceptions.UnknownTimeZoneError:
-        raise ValidationError("Invalid timezone.")
-
-
 class OnCallCalendar(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     url = models.URLField()
     timezone = models.CharField(max_length=255)
+
+    def save(self, *args, **kwargs):
+        validate_icalendar_url(self.url)
+        validate_timezone(self.timezone)
+        super(OnCallCalendar, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
