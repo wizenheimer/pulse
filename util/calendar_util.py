@@ -2,9 +2,10 @@ import requests
 import arrow
 import pytz
 from ics import Calendar
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 
-# TODO: sanitize email ingested
 def get_on_call(
     url=None,
     date=arrow.now(),
@@ -41,7 +42,20 @@ def get_on_call(
     on_call_list = []
     for event in timeline:
         # prepare the call list for the timeline
-        on_call_list.append(event.name)
+        email = event.name
+        try:
+            # check if there's only a single email address
+            if validate_email(email):
+                on_call_list.append(email)
+        except ValidationError:
+            # check if there's a list of emails in the event name
+            email_list = email.split(",")
+            for email in email_list:
+                try:
+                    if validate_email(email):
+                        on_call_list.append(email)
+                except ValidationError:
+                    continue
     return on_call_list
 
 
