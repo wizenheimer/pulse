@@ -187,7 +187,7 @@ def notify_via_text(phone_number, intent, context):
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
     body = f"Incident ID {context.get('id')}:{context.get('status')}"
 
-    if intent == "Acknowledge":
+    if intent == "Resolve":
         body += f"\nAcknowledge: {context.get('acknowledgement_view')}"
 
     client.messages.create(
@@ -195,3 +195,42 @@ def notify_via_text(phone_number, intent, context):
         from_=f"{settings.TWILIO_NUMBER}",
         body=f"{body}",
     )
+
+
+@app.task
+def trigger_webhook(webhook_url, context, intent):
+    payload = context
+    status_code = 500
+    if intent == "Alert":
+        payload.pop("acknowledgement_view")
+    try:
+        response = requests.post(
+            url=webhook_url,
+            json=payload,
+        )
+        status_code = response.status_code
+        message = "Request sent successfully."
+
+    except requests.exceptions.Timeout:
+        # Maybe set up for a retry, or continue in a retry loop
+        message = "Request timed out. Try exceeding the timeout limit."
+    except requests.exceptions.TooManyRedirects:
+        # Tell the user their URL was bad and try a different one
+        message = "Request exceeds the configured number of maximum redirections. Try a different URL."
+    except requests.exceptions.ConnectionError:
+        # Network problem (DNS failure, refused connection, etc)
+        message = "Request couldn't be fulfilled. URL connection refused."
+    except requests.exceptions.HTTPError:
+        # Invalid HTTP response or regular unsuccesful
+        message = "HTTP response is invalid. Please try with a different URL."
+    except requests.exceptions.RequestException as e:
+        # catastrophic error. bail.
+        message = "Request couldn't be fulfilled. URL connection refused."
+    finally:
+        # prepare a context object
+        context = {
+            "status_code": status_code,
+            "message": message,
+        }
+
+    return context
