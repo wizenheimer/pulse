@@ -37,6 +37,15 @@ class Team(models.Model):
         return self.title
 
 
+class UserGroups(models.Model):
+    """
+    A User Collective for organizing groups with-in teams
+    """
+
+    title = models.CharField(max_length=255, default="untitled")
+    description = models.CharField(max_length=255, default="untitled")
+
+
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True, db_index=True)
@@ -48,7 +57,19 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     # team
-    teams = models.ManyToManyField(Team, through="TeamAssignment", related_name="users")
+    teams = models.ManyToManyField(
+        Team,
+        through="TeamAssignment",
+        related_name="users",
+    )
+    # group
+    groups = models.ForeignKey(
+        UserGroups,
+        related_name="users",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
