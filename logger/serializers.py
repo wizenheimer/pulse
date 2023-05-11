@@ -4,7 +4,6 @@ from .models import Endpoint, CronHandler, Log, RequestHandler, Service
 
 
 # TODO: Snignal queue configuration
-# TODO: Celery configuration with Redis
 class RequestHandlerSerializer(serializers.ModelSerializer):
     class Meta:
         model = RequestHandler

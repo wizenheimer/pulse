@@ -1,9 +1,13 @@
 import re
+import os
 import requests
 from core.celery import app
-from logger.models import Endpoint, Service, Log
+from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
-from incident.tasks import create_incident, resolve_incident
+from logger.models import Endpoint, Service, Log, Incident
+from users.models import User
+from incident.tasks import create_incident
+from django.template.loader import render_to_string
 
 # disable SSL warnings: handshakes are computationally expensive, could drop that overhead
 requests.urllib3.disable_warnings()
@@ -97,8 +101,6 @@ def prepare_logs(frequency=180):
     """
     Optimized : Prepares all the endpoints which have the given frequency
     """
-    # TODO: figure out a workaround for using signals, signals won't be triggered in case of bulk create operation
-    # TODO: try to reuse the services query set, maybe operating on stale state
     services = Service.objects.filter(is_active=True)
 
     # Instead of creating each Log instance individually in a loop, can use the bulk_create() method to create multiple instances in a single database query
@@ -125,3 +127,51 @@ def prepare_logs(frequency=180):
                 log.response_body = response_body
             log_instances.append(log)
     Log.objects.bulk_create(log_instances)
+
+
+def incident_builder(incident_id):
+    """
+    Build a incident dictionary for a given incident
+    """
+    incident = Incident.objects.get(id=incident_id)
+    title = incident.title
+    body = incident.description
+    priority = incident.priority
+
+    # TODO: reverse the incident detail view
+    detail_view = ""
+    # TODO: reverse the incident acknowledgement
+    acknowledgement_view = ""
+
+    context = {
+        "id": incident_id,
+        "title": title,
+        "body": body,
+        "priority": priority,
+        "status": incident.status,
+        "detail_view": detail_view,
+        "acknowledgement_view": acknowledgement_view,
+    }
+
+    return context
+
+
+@app.task
+def notify_via_email(email, intent, context):
+    """
+    Notify via email notification
+    """
+    sender = os.environ.get("AWS_SES_EMAIL_SENDER", "no-reply@watchover.dev")
+
+    email_context = context
+    if intent == "Alert":
+        email_context.pop("acknowledgement_view")
+
+    email_body = render_to_string("email_template.html", email_context)
+
+    send_mail(
+        f"Incident ID {context.get('id')}:{context.get('status')}",
+        f"{email_body}",
+        f"{sender}",
+        [f"{email}"],
+    )

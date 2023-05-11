@@ -4,6 +4,7 @@ import pytz
 from ics import Calendar
 
 
+# TODO: sanitize email ingested
 def get_on_call(
     url=None,
     date=arrow.now(),

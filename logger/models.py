@@ -91,13 +91,18 @@ class Service(models.Model):
         return str(self.id)
 
 
+# TODO: subscribers are notified of the resolutions as well
 class Incident(models.Model):
     title = models.CharField(max_length=255, default="untitled")
     description = models.TextField()
+    # TODO: decompose priority using urgency and impact
     priority = models.CharField(
         max_length=20,
-        choices=[("P1", "P1"), ("P2", "P2"), ("P3", "P3"), ("P4", "P4")],
-        default="P1",
+        choices=[
+            ("Low", "Low Priority Incidents"),
+            ("High", "High Priority Incidents"),
+        ],
+        default="Low",
     )
     service = models.ForeignKey(
         Service,

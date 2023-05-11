@@ -147,13 +147,28 @@ REST_FRAMEWORK = {
     )
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django_ses.SESBackend"
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
-# TODO: Change prior to deployment
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=600),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
 }
+
+# local settings
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    SIMPLE_JWT = {
+        "ACCESS_TOKEN_LIFETIME": timedelta(minutes=600),
+        "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
+        "ROTATE_REFRESH_TOKENS": False,
+        "BLACKLIST_AFTER_ROTATION": False,
+        "UPDATE_LAST_LOGIN": False,
+    }
+
+
+# TODO: Change prior to deployment

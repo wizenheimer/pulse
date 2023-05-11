@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        .detail-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Incident Notification</h1>
+        <p><strong>Incident ID:</strong> {{ id }}</p>
+        <p><strong>Title:</strong> {{ title }}</p>
+        <p><strong>Priority:</strong> {{ priority }}</p>
+        <p><strong>Body:</strong> {{ body }}</p>
+        <p><strong>Status:</strong> {{ status_view }}</p>
+        <p><strong>Details:</strong> <a class="detail-link" href="{{ detail_view }}">View details</a></p>
+        {% if acknowledgement_view %}
+        <p><strong>Acknowledgement:</strong> <a class="detail-link" href="{{ acknowledgement_view }}">Acknowledge</a>
+        </p>
+        {% endif %}
+    </div>
+</body>
+
+</html>

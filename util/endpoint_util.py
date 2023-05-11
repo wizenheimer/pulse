@@ -30,7 +30,6 @@ def prepare_logs_laggard():
 
 
 def prepare_logs_optimized():
-    # TODO: figure out a workaround for using signals, signals won't be triggered in case of bulk create operation
     services = Service.objects.filter(is_active=True)
 
     # Instead of creating each Log instance individually in a loop, can use the bulk_create() method to create multiple instances in a single database query
