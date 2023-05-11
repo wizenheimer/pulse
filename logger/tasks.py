@@ -4,6 +4,8 @@ import requests
 from core.celery import app
 from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
+from twilio.rest import Client
+from django.conf import settings
 from logger.models import Endpoint, Service, Log, Incident
 from users.models import User
 from incident.tasks import create_incident
@@ -174,4 +176,22 @@ def notify_via_email(email, intent, context):
         f"{email_body}",
         f"{sender}",
         [f"{email}"],
+    )
+
+
+@app.task
+def notify_via_text(phone_number, intent, context):
+    """
+    Notify user via text.
+    """
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    body = f"Incident ID {context.get('id')}:{context.get('status')}"
+
+    if intent == "Acknowledge":
+        body += f"\nAcknowledge: {context.get('acknowledgement_view')}"
+
+    client.messages.create(
+        to=str(phone_number),
+        from_=f"{settings.TWILIO_NUMBER}",
+        body=f"{body}",
     )
