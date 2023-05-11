@@ -5,6 +5,10 @@
 
 Introducing Pulse, the incident management app that helps teams respond faster, collaborate smarter, and learn from incidents. With powerful features like real-time notifications, on-call scheduling, escalation policies, collaboration tools, and post-mortem analysis, Pulse streamlines incident resolution and drives continuous improvement. Pulse is an incident management tool which celebrates a culture of speed, agility, and risk-taking, where failure is embraced as a necessary step towards success.
 
+[![forthebadge](https://forthebadge.com/images/badges/contains-cat-gifs.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/kinda-sfw.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/compatibility-betamax.svg)](https://forthebadge.com)
 
 ##  🍵 RICE Prioritization
 |Feature|Impact (1-10)|Confidence (1-10)|Reach (1-10)|Effort (1-10)|RICE Score|Feature Components (in concise form)|
