@@ -119,6 +119,12 @@ class Incident(models.Model):
             ("Resolved", "Resolved"),
         ],
     )
+    source = models.ImageField(
+        upload_to=f"media/archive/",
+        help_text="store the image of the resource",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

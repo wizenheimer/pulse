@@ -6,12 +6,70 @@ from django.core.mail import send_mail
 from django.contrib.contenttypes.models import ContentType
 from twilio.rest import Client
 from django.conf import settings
+from uuid import uuid4
+from urllib.parse import urlencode
 from logger.models import Endpoint, Service, Log, Incident
 from incident.tasks import create_incident
 from django.template.loader import render_to_string
 
 # disable SSL warnings: handshakes are computationally expensive, could drop that overhead
 requests.urllib3.disable_warnings()
+
+
+def build_path(date):
+    """
+    Builds a unique pathname using the given date
+    """
+    filename = date.strftime("%Y-%m-%d-%H-%M-%S-") + str(uuid4()) + ".png"
+    path = f"media/incidents/{filename}"
+    return path
+
+
+def get_screenshot(url=None, path=None, folder="media/", filename="screenshot.png"):
+    """
+    Gets a screenshot using APIFlash
+    """
+    if path is None:
+        path = f"{folder}/{filename}"
+
+    params = {
+        "access_key": os.environ.get("API_FLASH_KEY"),
+        "url": f"{url}",
+        "full_page": True,
+        "scroll_page": True,
+        "fresh": True,
+    }
+
+    url = "https://api.apiflash.com/v1/urltoimage?" + urlencode(params)
+
+    response = requests.get(url)
+
+    with open(f"{path}", "wb") as f:
+        f.write(response.content)
+
+    return response.status_code
+
+
+@app.task
+def build_context(pk, url):
+    """
+    Prepare context using primary key and url
+    """
+    incident = Incident.objects.get(pk=pk)
+    url = url
+    path = build_path(incident.created_at)
+    incident.source = (
+        "https://media.giphy.com/media/etOX3h7ApZuDe7Fc5w/giphy-downsized-large.gif"
+    )
+    try:
+        if get_screenshot(url, path) != 200:
+            incident.source = path
+    except requests.exceptions.ReadTimeout as errrt:
+        pass
+    except requests.exceptions.RequestException as errex:
+        pass
+    finally:
+        incident.save()
 
 
 @app.task
