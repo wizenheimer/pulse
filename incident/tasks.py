@@ -1,6 +1,5 @@
 from core.celery import app
 from logger.models import Incident, Service, Endpoint
-from django.core.exceptions import ObjectDoesNotExist
 
 
 # TODO: figure out reason why the incident was created
@@ -24,7 +23,7 @@ def resolve_incident(service_id):
     """
     Resolves an existing incident
     """
-    try:
+    if Service.objects.filter(id=service_id).exists():
         # de-duplicate open incidents
         service = Service.objects.get(id=service_id)
         incident = Incident.objects.get(
@@ -33,5 +32,3 @@ def resolve_incident(service_id):
         )
         incident.status = "Resolved"
         incident.save()
-    except ObjectDoesNotExist:
-        pass

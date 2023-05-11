@@ -4,7 +4,7 @@ from util.calendar_util import get_on_call, get_arrow_date
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import render, get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
+
 from .serializers import OnCallCalendarSerializer
 from .models import OnCallCalendar
 
@@ -48,10 +48,8 @@ class OnCallCalendarViewset(viewsets.ModelViewSet):
             )
 
         for email in emails:
-            try:
+            if User.objects.filter(email=email).exists():
                 user = User.objects.get(email=email)
-            except ObjectDoesNotExist:
-                continue
-            user_id.append(user.id)
+                user_id.append(user.id)
 
         return Response(user_id, status=200)
