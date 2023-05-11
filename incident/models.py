@@ -12,13 +12,17 @@ from .validators import validate_timezone, validate_icalendar_url
 class OnCallCalendar(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
-    url = models.URLField()
-    timezone = models.CharField(max_length=255)
-
-    def save(self, *args, **kwargs):
-        validate_icalendar_url(self.url)
-        validate_timezone(self.timezone)
-        super(OnCallCalendar, self).save(*args, **kwargs)
+    url = models.URLField(
+        validators=[
+            validate_icalendar_url,
+        ]
+    )
+    timezone = models.CharField(
+        max_length=255,
+        validators=[
+            validate_timezone,
+        ],
+    )
 
     def __str__(self):
         return self.name
@@ -31,8 +35,12 @@ class EscalationPolicy(models.Model):
     repeat = models.PositiveIntegerField(default=0)
     urgency = models.PositiveIntegerField(default=1)
     impact = models.PositiveIntegerField(default=1)
+    # denotes the maximum level which could be reached
+    max_level = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # when the escalation level maxes out without acknowledgement, then triggers the notify_all clause
+    notify_all = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Escalation Policy ID:{self.id}"
@@ -42,21 +50,30 @@ class EscalationLevel(models.Model):
     # human readable name of the level
     name = models.CharField(max_length=255, default="MyLevel")
     repeat = models.PositiveIntegerField(
-        help_text="How many times to repeat the level", default=0
+        help_text="How many times to repeat the level",
+        default=0,
     )
     delay = models.PositiveIntegerField(
-        help_text="Denotes the delay in seconds between successive actions", default=0
+        help_text="Denotes the delay in seconds between successive actions",
+        default=0,
     )
     urgency = models.PositiveIntegerField(
-        help_text="Denotes the urgency of the incident", default=1
+        help_text="Denotes the urgency of the incident",
+        default=1,
     )
     days = models.CharField(
         help_text="Denotes the days for which incident would be triggered",
         default="1234567",
         max_length=7,
     )
-    start_time = models.DateTimeField(null=True, blank=True)
-    end_time = models.DateTimeField(null=True, blank=True)
+    start_time = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+    end_time = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
     timezone = models.CharField(
         null=True,
         blank=True,

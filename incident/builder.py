@@ -17,7 +17,7 @@ def build_policy_model(escalation_policy):
     """
     Creates and returns a new Escalation Policy Model
     """
-    name = escalation_policy["policy"].get("name", "Untitled")
+    name = escalation_policy["policy"].get("name", "MyPolicy")
     delay = escalation_policy["policy"].get("delay", 10)
     repeat = escalation_policy["repeat"].get("repeat", 0)
     urgency = escalation_policy["urgency"].get("urgency", 1)
@@ -39,7 +39,7 @@ def build_level_model(escalation_level):
     """
     Build a level model
     """
-    name = escalation_level.get("name", "Unknown")
+    name = escalation_level.get("name", "MyLevel")
     delay = escalation_level.get("delay", 0)
     repeat = escalation_level.get("repeat", 0)
     urgency = escalation_level.get("urgency", 1)
@@ -76,7 +76,7 @@ def build_action_model(action):
     """
     Build the action model
     """
-    name = action.get("name", "Action")
+    name = action.get("name", "MyAction")
     intent = action.get("intent", "Alert")
     context = action.get("context", "")
     entity = action.get("entity", "None")
@@ -94,7 +94,10 @@ def build_action_model(action):
     return action
 
 
-def build_model(url=None):
+def build_model(
+    url=None,
+    notify_all=False,
+):
     # response = requests.get(url)
 
     # # raise an exception if the response is not OK
@@ -127,5 +130,9 @@ def build_model(url=None):
         # Iterate over the actions of the level
         for action in level.get("actions", []):
             build_action_model(action)
-
-    return policy_instance.id
+    # indicate the max level
+    # level
+    policy_instance.max_level = level_position
+    policy_instance.notify_all = notify_all
+    policy_instance.save()
+    return policy_instance

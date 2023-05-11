@@ -125,6 +125,10 @@ class Incident(models.Model):
         null=True,
         blank=True,
     )
+    # denotes the escalation level to be triggered
+    # 0 -> denotes on-call responders
+    # when escalation policy maxes out
+    escalation_level = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
