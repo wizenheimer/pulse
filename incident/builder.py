@@ -40,7 +40,6 @@ def build_action_model(action):
     Build the action model
     """
     name = action.get("name", "MyAction")
-    intent = action.get("intent", "Alert")
     entity = action.get("entity", None)
     entity_type = action.get("type", None)
 
@@ -56,21 +55,18 @@ def build_action_model(action):
     if entity_type == "ID":
         action = EscalationAction.objects.create(
             name=name,
-            intent=intent,
             entity_type=ContentType.objects.get_for_model(User),
             target_object_id=entity,
         )
     elif entity_type == "GROUP":
         action = EscalationAction.objects.create(
             name=name,
-            intent=intent,
             entity_type=ContentType.objects.get_for_model(UserGroups),
             target_object_id=entity,
         )
     elif entity_type == "HOOK":
         action = EscalationAction.objects.create(
             name=name,
-            intent=intent,
             entity_type=ContentType.objects.get_for_model(Webhook),
             target_object_id=entity,
         )
