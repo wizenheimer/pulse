@@ -482,32 +482,3 @@ class Log(models.Model):
 
     def __str__(self):
         return self.status
-
-
-class Events(models.Model):
-    """
-    Incase of an incident, prepopulate it with events
-        - Queries
-        - Engaging with external webhooks
-    """
-
-    url = models.URLField(null=True, blank=True)
-    # store the response generated from the queries
-    body = models.TextField()
-    request_handler = models.ForeignKey(
-        RequestHandler,
-        blank=True,
-        null=True,
-        on_delete=models.CASCADE,
-    )
-    # incident foreign key
-    incident = models.ForeignKey(
-        Incident,
-        blank=True,
-        null=True,
-        related_name="event",
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self):
-        return str(self.id)

@@ -1,14 +1,6 @@
-# Version : 4.0
-# =================================================================
-# Changelog :
-
+# A custom yaml policy for creating escalation policies
 policy:
   name: My Escalation Policy
-  # A custom yaml policy for creating escalation policies
-  delay: 300
-  # denotes delay in seconds between every level of the policy
-  repeat: 0
-  # denotes number of times the policy would be repeated
   levels:
     # level 0 is reserved for on-call responders
     - name: Level 1
@@ -17,19 +9,20 @@ policy:
         - name: Notify Customer Success Teams
           intent: Alert
           # Entity doesn't have option to acknowledge the event
-          entity: support@example.com
+          # Entity type is not stored in the Action Model but helps define generic foreign keys
+          entity: 12
           # can be `entire_team`
-          type: Email
+          type: ID
           # in case of 'entire_team' type should be attribute
         - name: Notify Backend Teams
           intent: Resolve
-          entity: +1234567890
-          type: Phone
+          entity: 13
+          type: GROUP
         - name: Lorem Ipsum Dolor
           intent: Resolve
-          entity: Slack
+          entity: 13
           # name of the channel, incase not present would post message to general incident channel
-          type: Attribute
+          type: HOOK
           # in case of person, could be user_id
     # - name: Level 4
     # denotes whether team would be notified of the incident
