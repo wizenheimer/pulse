@@ -8,9 +8,13 @@ from twilio.rest import Client
 from django.conf import settings
 from uuid import uuid4
 from urllib.parse import urlencode
+from incident.models import EscalationLevelAssignment, Webhook
 from logger.models import Endpoint, Service, Log, Incident
 from incident.tasks import create_incident
 from django.template.loader import render_to_string
+
+from users.models import UserGroups, User
+from users.tasks import notify_user
 
 # disable SSL warnings: handshakes are computationally expensive, could drop that overhead
 requests.urllib3.disable_warnings()
@@ -259,3 +263,57 @@ def send_webhook_notification(webhook_url, incident_id):
         }
 
     return context
+
+
+def notify_user_groups(
+    user_group_id,
+    team_id,
+    incident_id,
+    priority="Low",
+):
+    user_group = UserGroups.objects.get(id=user_group_id)
+    for user in user_group.users.all():
+        notify_user(
+            user_id=user.id,
+            team_id=team_id,
+            incident_id=incident_id,
+            priority=priority,
+        )
+
+
+def escalate_incident(incident_id, priority):
+    incident = Incident.objects.get(incident_id=incident_id)
+    service = incident.service
+    policy = service.policy
+    level = incident.escalation_level
+    escalation_level = EscalationLevelAssignment.objects.get(
+        policy=policy, level=level
+    )[0].level
+
+    for action in escalation_level.actions.all():
+        entity_id = action.entity_id
+        entity_type = action.entity_type
+
+        if entity_type == ContentType.objects.get_for_model(User):
+            notify_user(
+                user_id=entity_id,
+                team_id=service.team.id,
+                incident_id=incident_id,
+                priority=priority,
+            )
+        elif entity_type == ContentType.objects.get_for_model(UserGroups):
+            notify_user_groups(
+                user_group_id=entity_id,
+                team_id=service.team.id,
+                incident_id=incident_id,
+                priority=priority,
+            )
+        elif entity_type == ContentType.objects.get_for_model(Webhook):
+            webhook_url = Webhook.objects.get(id=entity_id).url
+            send_webhook_notification(
+                webhook_url=webhook_url,
+                priority=priority,
+            )
+
+    incident.escalation_level += 1
+    incident.save()

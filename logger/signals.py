@@ -1,13 +1,13 @@
 from django.db.models import signals
 from django.dispatch import receiver
-from users.tasks import notify_user
-from logger.tasks import send_email_notification
+from users.tasks import notify_user, notify_team
+from logger.tasks import send_email_notification, escalate_incident
 from .models import Incident
 from users.models import User
 
 
 @receiver(signals.post_save, sender=Incident)
-def escalation_builder(sender, created, instance, **kwargs):
+def level_0_escalation(sender, created, instance, **kwargs):
     if created:
         service = instance.service
         team_id = service.team.id
@@ -25,6 +25,23 @@ def escalation_builder(sender, created, instance, **kwargs):
                 send_email_notification(
                     email=email,
                     incident_id=instance.id,
+                )
+    else:
+        service = instance.service
+        policy = service.escalation_policy
+        if instance.status == "Open":
+            team_id = service.team.id
+            max_level = policy.max_level
+            if instance.escalation_level == max_level and policy.notify_all:
+                notify_team(
+                    team_id=team_id,
+                    incident_id=instance.id,
+                    priority=instance.priority,
+                )
+            else:
+                escalate_incident(
+                    incident_id=instance.id,
+                    priority=instance.priority,
                 )
 
     return instance
