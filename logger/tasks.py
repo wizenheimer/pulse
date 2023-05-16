@@ -51,11 +51,11 @@ def get_screenshot(url=None, path=None, folder="media/", filename="screenshot.pn
 
 
 @app.task
-def build_context(pk, url):
+def add_screenshot_to_log(incident_id, url):
     """
-    Prepare context using primary key and url
+    Adds a screenshot to the logs
     """
-    incident = Incident.objects.get(pk=pk)
+    incident = Incident.objects.get(pk=incident_id)
     url = url
     path = build_path(incident.created_at)
     incident.source = (
@@ -188,64 +188,33 @@ def prepare_logs(frequency=180):
     Log.objects.bulk_create(log_instances)
 
 
-def incident_builder(incident_id):
-    """
-    Build a incident dictionary for a given incident
-    """
-    incident = Incident.objects.get(id=incident_id)
-    title = incident.title
-    body = incident.description
-    priority = incident.priority
-
-    # TODO: reverse the incident detail view
-    detail_view = ""
-    # TODO: reverse the incident acknowledgement
-    acknowledgement_view = ""
-
-    context = {
-        "id": incident_id,
-        "title": title,
-        "body": body,
-        "priority": priority,
-        "status": incident.status,
-        "detail_view": detail_view,
-        "acknowledgement_view": acknowledgement_view,
-    }
-
-    return context
-
-
 @app.task
-def notify_via_email(email, intent, context):
+def send_email_notification(email, incident_id):
     """
     Notify via email notification
     """
     sender = os.environ.get("AWS_SES_EMAIL_SENDER", "no-reply@watchover.dev")
 
-    email_context = context
-    if intent == "Alert":
-        email_context.pop("acknowledgement_view")
-
-    email_body = render_to_string("email_template.html", email_context)
+    incident = Incident.objects.get(id=incident_id)
 
     send_mail(
-        f"Incident ID {context.get('id')}:{context.get('status')}",
-        f"{email_body}",
-        f"{sender}",
-        [f"{email}"],
+        subject=f"An Incident requires your attention - Status {incident.status}",
+        message=f"Service Name: {incident.service}\n View Details: {incident.get_detail_view()})",
+        from_email=sender,
+        recipient_list=email,
     )
 
 
 @app.task
-def notify_via_text(phone_number, intent, context):
+def send_text_notification(phone_number, incident_id):
     """
     Notify user via text.
     """
     client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-    body = f"Incident ID {context.get('id')}:{context.get('status')}"
 
-    if intent == "Resolve":
-        body += f"\nAcknowledge: {context.get('acknowledgement_view')}"
+    incident = Incident.objects.get(id=incident_id)
+
+    body = f"An Incident requires your attention - Status {incident.status}\nService Name: {incident.service}\nView Details: {incident.get_details()}"
 
     client.messages.create(
         to=str(phone_number),
@@ -255,11 +224,10 @@ def notify_via_text(phone_number, intent, context):
 
 
 @app.task
-def trigger_webhook(webhook_url, context, intent):
-    payload = context
+def send_webhook_notification(webhook_url, incident_id):
+    incident = Incident.objects.get(id=incident_id)
+    payload = incident.get_dict()
     status_code = 500
-    if intent == "Alert":
-        payload.pop("acknowledgement_view")
     try:
         response = requests.post(
             url=webhook_url,

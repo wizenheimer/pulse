@@ -132,6 +132,25 @@ class Incident(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def get_detail_view(self):
+        # TODO: Add reverse view
+        return ""
+
+    def get_dict(self):
+        data = {
+            "title": self.title,
+            "description": self.description,
+            "service": self.service.name,
+            "priority": self.priority,
+            "source": self.source,
+            "status": self.status,
+            "created": self.created,
+            "updated": self.updated,
+            # TODO: reverse detail view for Incident
+            "details": "",
+        }
+        return data
+
     def __str__(self):
         return self.status
 

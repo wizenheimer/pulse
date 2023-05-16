@@ -45,11 +45,14 @@ class UserGroups(models.Model):
     title = models.CharField(max_length=255, default="untitled")
     description = models.CharField(max_length=255, default="untitled")
 
+    def __str__(self):
+        return self.id
+
 
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True, db_index=True)
-    phone = PhoneNumberField(unique=True, null=True, blank=True)
+    phone_number = PhoneNumberField(unique=True, null=True, blank=True)
     # has verified email address and phone number
     is_verified = models.BooleanField(default=False)
     # has an active account
