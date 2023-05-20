@@ -10,6 +10,9 @@ Introducing Pulse, the incident management app that helps teams respond faster, 
 [![forthebadge](https://forthebadge.com/images/badges/built-with-love.svg)](https://forthebadge.com)
 [![forthebadge](https://forthebadge.com/images/badges/compatibility-betamax.svg)](https://forthebadge.com)        
         
+## 🗒️ Note
+I was totally losing my mojo working on this thing, so I decided to wave the white flag and end the development phase. I've generously open sourced the code, so it's up for grabs now. Feel free to jump in, add your magic touch, and use it as a nifty starting point. Let's see what awesome creations we can brew together!
+
 ##  ⚙️ License
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
         
