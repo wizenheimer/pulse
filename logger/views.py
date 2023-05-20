@@ -1,6 +1,7 @@
 import re
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
@@ -13,13 +14,18 @@ from .models import (
     SubscriberAssignment,
     GuestAssignment,
     Service,
+    Incident,
+    Log,
 )
 from users.models import User, Guest
 from .serializers import (
+    IncidentSerializer,
     RequestHandlerSerializer,
     EndpointSerializer,
     CronHandlerSerializer,
     ServiceSerializer,
+    IncidentSerializer,
+    LogSerializer,
 )
 
 
@@ -78,6 +84,31 @@ class EndpointViewset(viewsets.ModelViewSet):
 class CronHandlerViewset(viewsets.ModelViewSet):
     queryset = CronHandler.objects.all()
     serializer_class = CronHandlerSerializer
+
+
+class IncidentViewset(viewsets.ReadOnlyModelViewSet):
+    queryset = Incident.objects.all()
+    serializer_class = IncidentSerializer
+
+    @action(detail=True, methods=["post"])
+    def status(self, request, pk=None):
+        status = request.data.get("status", None)
+        if status is None or status not in [
+            "Open",
+            "Acknowledged",
+            "Resolved",
+        ]:
+            raise ValidationError("Invalid status")
+
+        incident = get_object_or_404(Incident, pk=pk)
+        incident.status = status
+        incident.save()
+        return Response(
+            {
+                "status": incident.status,
+            },
+            status=200,
+        )
 
 
 @api_view(["POST"])

@@ -31,10 +31,7 @@ def create_incident(service_id):
                 status="Open",
             )[0]
 
-    if incident is None:
-        raise ValidationError("Couldn't create an incident for service")
-
-    return incident.id
+    return incident.id if incident is not None else None
 
 
 @app.task

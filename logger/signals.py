@@ -10,6 +10,7 @@ from users.models import User
 def level_0_escalation(sender, created, instance, **kwargs):
     if created:
         service = instance.service
+        instance.escalation_level = 1
         team_id = service.team.id
         on_call_list = service.calendar.get_on_call()
         for email in on_call_list:
@@ -26,6 +27,7 @@ def level_0_escalation(sender, created, instance, **kwargs):
                     email=email,
                     incident_id=instance.id,
                 )
+        instance.save()
     else:
         service = instance.service
         policy = service.escalation_policy
