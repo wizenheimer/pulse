@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "phonenumber_field",
     "django_celery_results",
+    "django_elasticsearch_dsl",
+    "django_elasticsearch_dsl_drf",
     # local apps
     "users",
     # "monitor", deprecated
@@ -177,3 +179,11 @@ if DEBUG:
 # TODO: Change prior to deployment
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media/"
+
+ELASTICSEARCH_DSL = {
+    "default": {"hosts": "localhost:9200"},
+}
+
+ELASTICSEARCH_INDEX_NAMES = {
+    "logger.log": "logs",
+}
