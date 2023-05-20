@@ -15,6 +15,7 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     SuggesterFilterBackend,
 )
 from .models import (
+    MaintainancePolicy,
     RequestHandler,
     Endpoint,
     CronHandler,
@@ -27,14 +28,15 @@ from .models import (
 from users.models import User, Guest
 from .serializers import (
     IncidentSerializer,
+    MaintainanceWindowSerializer,
     RequestHandlerSerializer,
     EndpointSerializer,
     CronHandlerSerializer,
     ServiceSerializer,
     IncidentSerializer,
+    LogDocumentSerializer,
 )
 from .documents import LogDocument
-from .serializers import LogDocumentSerializer
 
 
 class RequestHandlerViewset(viewsets.ModelViewSet):
@@ -211,3 +213,8 @@ class LogViewset(DocumentViewSet):
     )
 
     filter_fields = {"status": "status"}
+
+
+class MaintainanceWindowViewset(viewsets.ModelViewSet):
+    queryset = MaintainancePolicy.objects.all()
+    serializer = MaintainanceWindowSerializer

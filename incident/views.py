@@ -5,8 +5,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import render, get_object_or_404
 
-from .serializers import OnCallCalendarSerializer
-from .models import OnCallCalendar
+from .serializers import (
+    EscalationPolicySerializer,
+    OnCallCalendarSerializer,
+    EscalationLevelSerializer,
+    EscalationActionSerializer,
+)
+from .models import OnCallCalendar, EscalationPolicy, EscalationAction, EscalationLevel
 
 
 # Create your views here.
@@ -53,3 +58,18 @@ class OnCallCalendarViewset(viewsets.ModelViewSet):
                 user_id.append(user.id)
 
         return Response(user_id, status=200)
+
+
+class EscalationPolicyViewset(viewsets.ModelViewSet):
+    queryset = EscalationPolicy.objects.all()
+    serializer_class = EscalationPolicySerializer
+
+
+class EscalationLevelViewset(viewsets.ModelViewSet):
+    queryset = EscalationLevel.objects.all()
+    serializer_class = EscalationLevelSerializer
+
+
+class EscaltionActionViewset(viewsets.ModelViewSet):
+    queryset = EscalationAction.objects.all()
+    serializer_class = EscalationActionSerializer

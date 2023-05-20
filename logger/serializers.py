@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
-from .models import Endpoint, CronHandler, Incident, Log, RequestHandler, Service
+from .models import (
+    Endpoint,
+    CronHandler,
+    Incident,
+    Log,
+    MaintainancePolicy,
+    RequestHandler,
+    Service,
+)
 from logger.documents import LogDocument
 
 
@@ -89,4 +97,10 @@ class LogDocumentSerializer(DocumentSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Incident
+        fields = "__all__"
+
+
+class MaintainanceWindowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MaintainancePolicy
         fields = "__all__"

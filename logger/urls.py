@@ -10,7 +10,11 @@ router.register(r"request", views.RequestHandlerViewset, basename="request_views
 router.register(r"service", views.ServiceViewset, basename="service_viewset")
 router.register(r"incident", views.IncidentViewset, basename="incident_viewset")
 router.register(r"logs", views.LogViewset, basename="logs_viewset")
-
+router.register(
+    r"maintainance-window",
+    views.MaintainanceWindowViewset,
+    basename="maintainance_window_viewset",
+)
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path("team-subscribe/", views.teammate_subscribe, name="team-subscribe"),
