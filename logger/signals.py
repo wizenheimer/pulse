@@ -2,7 +2,7 @@ from django.db.models import signals
 from django.dispatch import receiver
 from users.tasks import notify_user, notify_team
 from logger.tasks import send_email_notification, escalate_incident
-from .models import Incident
+from .models import Incident, Log
 from users.models import User
 
 

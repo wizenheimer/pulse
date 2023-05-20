@@ -6,7 +6,14 @@ from rest_framework import viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-
+from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from .pagination import StandardResultsSetPagination, LargeResultsSetPagination
+from django_elasticsearch_dsl_drf.constants import SUGGESTER_COMPLETION
+from django_elasticsearch_dsl_drf.filter_backends import (
+    SearchFilterBackend,
+    FilteringFilterBackend,
+    SuggesterFilterBackend,
+)
 from .models import (
     RequestHandler,
     Endpoint,
@@ -25,8 +32,9 @@ from .serializers import (
     CronHandlerSerializer,
     ServiceSerializer,
     IncidentSerializer,
-    LogSerializer,
 )
+from .documents import LogDocument
+from .serializers import LogDocumentSerializer
 
 
 class RequestHandlerViewset(viewsets.ModelViewSet):
@@ -181,3 +189,25 @@ def guest_subscribe(request, pk=None):
         message = "Successfully unsubscribed."
 
     return Response({"success": message}, status=201)
+
+
+class LogViewset(DocumentViewSet):
+    document = LogDocument
+    serializer_class = LogDocumentSerializer
+    pagination_class = StandardResultsSetPagination
+
+    filter_backends = [
+        SearchFilterBackend,
+        FilteringFilterBackend,
+        SuggesterFilterBackend,
+    ]
+
+    search_fields = (
+        "status",
+        "response_time",
+        "message",
+        "response_body",
+        "target",
+    )
+
+    filter_fields = {"status": "status"}

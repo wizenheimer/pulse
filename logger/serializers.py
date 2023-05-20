@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from django_elasticsearch_dsl_drf.serializers import DocumentSerializer
 from .models import Endpoint, CronHandler, Incident, Log, RequestHandler, Service
+from logger.documents import LogDocument
 
 
 # TODO: Snignal queue configuration
@@ -72,10 +74,16 @@ class ServiceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LogSerializer(serializers.ModelSerializer):
+class LogDocumentSerializer(DocumentSerializer):
     class Meta:
-        model = Log
-        fields = "__all__"
+        document = LogDocument
+        fields = (
+            "status",
+            "response_time",
+            "response_body",
+            "message",
+            "target",
+        )
 
 
 class IncidentSerializer(serializers.ModelSerializer):

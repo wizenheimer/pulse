@@ -8,11 +8,11 @@ from twilio.rest import Client
 from django.conf import settings
 from uuid import uuid4
 from urllib.parse import urlencode
+from django_elasticsearch_dsl.registries import registry
 from incident.models import EscalationLevelAssignment, Webhook
 from logger.models import Endpoint, Service, Log, Incident
 from incident.tasks import create_incident
 from django.template.loader import render_to_string
-
 from users.models import UserGroups, User
 from users.tasks import notify_user
 
@@ -52,6 +52,11 @@ def get_screenshot(url=None, path=None, folder="media/", filename="screenshot.pn
         f.write(response.content)
 
     return response.status_code
+
+
+def update_index(instances):
+    for _instance in instances:
+        registry.update(_instance)
 
 
 @app.task
@@ -189,7 +194,10 @@ def prepare_logs(frequency=180):
             if response_body is not None:
                 log.response_body = response_body
             log_instances.append(log)
-    Log.objects.bulk_create(log_instances)
+    created_instances = Log.objects.bulk_create(log_instances)
+    # TODO: update log index after bulk creation
+    # TODO: reduce the overhead of updating log index, try async
+    update_index(created_instances)
 
 
 @app.task

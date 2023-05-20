@@ -9,6 +9,7 @@ router.register(r"cron", views.CronHandlerViewset, basename="cron_viewset")
 router.register(r"request", views.RequestHandlerViewset, basename="request_viewset")
 router.register(r"service", views.ServiceViewset, basename="service_viewset")
 router.register(r"incident", views.IncidentViewset, basename="incident_viewset")
+router.register(r"logs", views.LogViewset, basename="logs_viewset")
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
